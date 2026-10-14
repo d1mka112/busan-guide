@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<title>Пусан по Naver</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one column for a phone in hand; sticky tab bar, list rows with hairlines instead of cards; stats as chips. */
+:root{
+  --bg:#F2F5F7; --surface:#FFFFFF; --fg:#16222C; --muted:#5E6E7A; --line:#D7DFE5; --chip:#E4ECF0;
+  --accent:#0E6F7C; --accent-ink:#FFFFFF; --ok:#1E7F4F; --warn:#B7791F; --bad:#B23A3A;
+  --display:"Golos Text","IBM Plex Sans","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E161C; --surface:#16222B; --fg:#E7EEF2; --muted:#9AACB8; --line:#27353F; --chip:#1F2E38;
+  --accent:#58C3CF; --accent-ink:#0B1418; --ok:#5FCF8E; --warn:#E0B35A; --bad:#F08383; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E161C; --surface:#16222B; --fg:#E7EEF2; --muted:#9AACB8; --line:#27353F; --chip:#1F2E38;
+  --accent:#58C3CF; --accent-ink:#0B1418; --ok:#5FCF8E; --warn:#E0B35A; --bad:#F08383; color-scheme:dark }
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:0 48px}
+.wrap{max-width:760px;margin:0 auto}
+header.top{padding-block:22px 10px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,6vw,34px);letter-spacing:-.01em;line-height:1.1;margin:0 0 6px;text-wrap:balance}
+.sub{color:var(--muted);font-size:13.5px;margin:0}
+.now{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.now b{color:var(--fg);font-weight:600}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);margin-inline:-16px;padding-inline:16px;padding-block:8px;border-bottom:1px solid var(--line)}
+nav.tabs .row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+nav.tabs .row::-webkit-scrollbar{display:none}
+nav.tabs button{flex:0 0 auto;appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 13.5px var(--display);padding:8px 13px;border-radius:999px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.tab{display:none;padding-top:14px}
+section.tab.on{display:block}
+.lead{color:var(--muted);font-size:14px;margin:0 0 14px;max-width:62ch}
+.lead b{color:var(--fg);font-weight:600}
+h2{font-family:var(--display);font-weight:700;font-size:19px;margin:22px 0 4px;letter-spacing:-.01em;text-wrap:balance}
+h2:first-child{margin-top:4px}
+.h2note{color:var(--muted);font-size:13.5px;margin:0 0 8px;max-width:62ch}
+.list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.p{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 14px;border-top:1px solid var(--line)}
+.p:first-child{border-top:0}
+.kr{font-family:var(--display);font-weight:700;font-size:16px;line-height:1.25;min-width:0;overflow-wrap:anywhere}
+.ru{color:var(--muted);font-size:13px;margin-top:1px}
+.map{grid-row:1 / span 2;align-self:start;flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;background:var(--chip);color:var(--accent);text-decoration:none;font:600 12.5px var(--display);padding:7px 10px;border-radius:8px;white-space:nowrap}
+.map:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:6px 10px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+.stats .n{color:var(--fg);font-weight:600}
+.hrs{grid-column:1 / -1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:13px;color:var(--muted)}
+.st{display:inline-block;font:600 11.5px var(--display);padding:2px 7px;border-radius:999px;background:var(--chip);color:var(--fg);letter-spacing:.01em}
+.st.ok{color:var(--ok)} .st.warn{color:var(--warn)} .st.bad{color:var(--bad)}
+.chip{display:inline-block;font:600 11.5px var(--display);padding:2px 7px;border-radius:999px;background:var(--accent);color:var(--accent-ink)}
+.praise,.note{grid-column:1 / -1;font-size:13.5px;margin:0}
+.praise{color:var(--muted)} .praise b{color:var(--fg);font-weight:500}
+.note{margin-top:1px}
+.plan h3{font-family:var(--display);font-size:17px;margin:18px 0 6px}
+.plan p{margin:0 0 8px;max-width:65ch}
+.plan ul{margin:0 0 8px;padding-left:18px;max-width:65ch}
+.plan li{margin:4px 0}
+.plan a{color:var(--accent);text-decoration:none;font-weight:600}
+.plan a:hover,.plan a:focus-visible{text-decoration:underline}
+footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
+@media (prefers-reduced-motion:no-preference){ nav.tabs button{transition:background .15s,color .15s} }
+
+
+.mapbtns{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.mapbtns button{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 12.5px var(--display);padding:7px 11px;border-radius:999px;cursor:pointer}
+.mapbtns button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mapbox{height:min(70vh,640px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#DCE8EE}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.legend label{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--display);padding:5px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;position:relative}
+.legend label i{width:11px;height:11px;border-radius:50%;background:var(--c);border:1.5px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+.legend label.off{opacity:.45}
+.legend input{position:absolute;opacity:0;width:0;height:0}
+.leaflet-container{font-family:var(--body);font-size:13px}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--fg);box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.leaflet-popup-content{margin:10px 12px;line-height:1.35}
+.pp b.kr{font-family:var(--display);font-size:14.5px;display:block}
+.pp .ru{color:var(--muted);font-size:12.5px}
+.pp .stats{margin-top:4px}
+.pp .hrs{margin-top:3px}
+.pp .praise{margin-top:3px;font-size:12.5px}
+.pp .note{margin-top:3px;font-size:12.5px}
+.pp .map{display:inline-flex;margin-top:8px}
+.leaflet-tooltip.hotel-label{background:#E0352B;color:#fff;border:0;font:700 12px var(--display);padding:2px 7px;border-radius:6px}
+.leaflet-tooltip.hotel-label::before{border-top-color:#E0352B}
+.leaflet-tooltip.pt{font:600 12px var(--display);padding:3px 7px;border-radius:6px;background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header class="top">
+  <h1>Пусан по Naver Map</h1>
+  <p class="sub">14–16 октября · отель Brown-Dot Songdo (서구 암남동) · данные Naver Place на 14 октября</p>
+  <div class="now" id="now"></div>
+</header>
+
+<nav class="tabs" aria-label="Разделы"><div class="row" id="tabs"></div></nav>
+
+
+<section class="tab" id="tab-map">
+  <p class="lead">Подложка: карта Naver Map (стиль basic, корейские подписи, те же тайлы, что в приложении). Приближается до уровня улиц. Точки: все места из подборки, наведите или нажмите. <b>Красная точка</b> — ваш отель.</p>
+  <div class="legend" id="legend"></div>
+  <div class="mapbtns"><button type="button" id="zhome">К отелю</button><button type="button" id="zall">Весь Пусан</button><button type="button" id="zcore">Нампо и Хэундэ</button></div>
+  <div id="map" class="mapbox" aria-label="Карта Пусана"></div>
+</section>
+
+<section class="tab" id="tab-soup">
+  <p class="lead"><b>Отзывы</b> = 방문자 리뷰, посетители с подтверждённым визитом. <b>Блог</b> = обзоры в корейских блогах. Звёзды есть там, где заведение их не скрыло. «Хвалят» = самые частые голоса корейцев в карточке. Цены: миска 10–12 тыс. ₩, 수육백반 (отварная свинина + суп) 13–15 тыс.</p>
+  <h2>Тведжи-кукпаб 돼지국밥</h2>
+  <p class="h2note">Главный суп Пусана: наваристый свиной бульон с рисом и ломтиками мяса. К нему дают 새우젓 (солёные креветки) и перец, добавлять по вкусу.</p>
+  <div class="list" data-group="gukbap"></div>
+  <h2>Пок-кук 복국 и тэгу-тхан 대구탕</h2>
+  <p class="h2note">Хэундэйская классика: прозрачный суп из фугу (지리) или острый (탕), и суп из трески с редькой. Едят на завтрак.</p>
+  <div class="list" data-group="fish"></div>
+  <h2>Хэджан-кук 해장국</h2>
+  <p class="h2note">Густые «похмельные» супы на говяжьих рёбрах и костях.</p>
+  <div class="list" data-group="haejang"></div>
+</section>
+
+<section class="tab" id="tab-sando">
+  <p class="lead"><b>Про клубнику:</b> корейский сезон начинается в конце ноября. Сейчас в сандо кладут инжир (무화과), виноград шайн-мускат, дыню, хурму. Клубника в меню сейчас только у 신창동커피 в Нампо (летняя клубника) и клубничное парфе у 하루와 в Чонпо. Лучше спросить на месте.</p>
+  <h2>Сандо 산도</h2>
+  <p class="h2note">Японские сэндвичи на мягком хлебе с фруктами и взбитыми сливками. В карте ищутся как 후르츠산도 или 과일산도.</p>
+  <div class="list" data-group="sando"></div>
+</section>
+
+<section class="tab" id="tab-jjajang">
+  <p class="lead">Чачжанмён 짜장면 (лапша в чёрной бобовой пасте) и чампон 짬뽕 (острый суп с морепродуктами) подают в одних и тех же корейско-китайских местах. 간짜장 = паста обжарена отдельно, насыщеннее. 쟁반짜장 = большая тарелка на двоих-троих.</p>
+  <h2>Чачжанмён и чампон</h2>
+  <div class="list" data-group="jjajang"></div>
+</section>
+
+<section class="tab" id="tab-shop">
+  <p class="lead">Количество отзывов у магазинов меньше, чем у еды, но соотношение показательное. 보세 = корейские магазины без бренда с собственным дизайном, главная причина ехать за одеждой в Сомён.</p>
+  <h2>Сомён 서면 и Чонпо 전포</h2>
+  <p class="h2note">Главный хаб одежды. Метро линия 1 от Чагальчхи до 서면역, 20 минут. Чонпо, квартал кафе и лавок, в 5 минутах пешком к востоку.</p>
+  <div class="list" data-group="shop-seomyeon"></div>
+  <h2>Нампо 남포 и Кванбокро 광복로</h2>
+  <p class="h2note">Пешеходная улица масс-маркета рядом с площадью BIFF и рынком Кукче. По вашему маршруту 14 октября.</p>
+  <div class="list" data-group="shop-nampo"></div>
+  <h2>Центум и аутлеты</h2>
+  <div class="list" data-group="shop-centum"></div>
+</section>
+
+<section class="tab" id="tab-sights">
+  <p class="lead">Для мест главная метрика не визиты, а <b>блог</b>: о сколько раз корейцы написали. Кваналли с мостом с большим отрывом лидирует по всему городу.</p>
+  <h2>Пляжи и набережные</h2>
+  <div class="list" data-group="beach"></div>
+  <h2>Деревни, тропы, острова</h2>
+  <div class="list" data-group="walk"></div>
+  <h2>Горы и смотровые</h2>
+  <div class="list" data-group="mount"></div>
+  <h2>Здания и храмы</h2>
+  <div class="list" data-group="build"></div>
+</section>
+
+<section class="tab plan" id="tab-plan">
+  <p class="lead">Как подборка ложится на ваш план с учётом часов работы. Ссылки ведут в Naver Map.</p>
+  <h3>Среда 14 октября. Камчхон, Чагальчхи, BIFF, Сондо</h3>
+  <ul>
+    <li>Обед у площади BIFF: <a href="https://map.naver.com/p/entry/place/718740707">일등가마솥돼지국밥 남포점</a> (круглосуточно) или чачжанмён в <a href="https://map.naver.com/p/entry/place/1499213960">홍유단 남포본점</a>, либо старый <a href="https://map.naver.com/p/entry/place/13572413">옥생관</a> у рынка Кукче.</li>
+    <li>Сандо: <a href="https://map.naver.com/p/entry/place/1757086600">신창동커피 남포점</a> на Кванбокро. Там же шопинг: Topten, 8 Seconds, SPAO, Lotte Gwangbok с крышей.</li>
+    <li>Если есть силы вечером: метро до 서면역, подземный пассаж, 피플, Musinsa, и сандо в Чонпо (<a href="https://map.naver.com/p/entry/place/2007508153">하루와</a> до 21:00, <a href="https://map.naver.com/p/entry/place/1921462556">웨드</a> до полуночи).</li>
+    <li>Ужин у отеля: <a href="https://map.naver.com/p/entry/place/1403071817">속시원해대구탕 송도본점</a>, треска, 07:00–22:00. Закат: <a href="https://map.naver.com/p/entry/place/13338934">송도구름산책로 и 암남공원</a> или канатка.</li>
+    <li>Ёндо в 15 минутах от Нампо: <a href="https://map.naver.com/p/entry/place/37418047">흰여울문화마을</a> и <a href="https://map.naver.com/p/entry/place/1229640570">또시아</a>. 태종대짬뽕 сегодня закрыт, среда выходной.</li>
+  </ul>
+  <h3>Четверг 15 октября. Ёнгунса, Хэундэ, Blueline Park, Кваналли</h3>
+  <ul>
+    <li>После храма: аутлет <a href="https://map.naver.com/p/entry/place/35816951">롯데프리미엄아울렛 동부산</a> в 10 минутах. По дороге в Хэундэ: <a href="https://map.naver.com/p/entry/place/1302139880">송정돌짬뽕</a>, чампон на камне.</li>
+    <li>У станции Мипхо, откуда стартует Blueline: <a href="https://map.naver.com/p/entry/place/1185023911">극동돼지국밥</a> в минуте или <a href="https://map.naver.com/p/entry/place/11833768">속씨원한 대구탕 미포 본점</a>. Суп из фугу: <a href="https://map.naver.com/p/entry/place/11672174">금수복국 해운대본점</a>.</li>
+    <li>Сандо в Хэундэ: <a href="https://map.naver.com/p/entry/place/1777650825">듀플릿 해리단길</a>, 09:00–22:00. Закат: 동백섬 и <a href="https://map.naver.com/p/entry/place/35058096">더베이101</a>, либо <a href="https://map.naver.com/p/entry/place/1328539259">부산엑스더스카이</a>.</li>
+    <li>Вечер на Кваналли: <a href="https://map.naver.com/p/entry/place/1291947123">부산토박이돼지국밥</a> (круглосуточно, рекорд по отзывам), <a href="https://map.naver.com/p/entry/place/1402129199">바로해장</a>, или чачжанмён с видом на мост в <a href="https://map.naver.com/p/entry/place/38411440">홍유단 광안점</a>. Инжирный сандо: <a href="https://map.naver.com/p/entry/place/1969922076">연의양과 광안점</a> до 22:00. <a href="https://map.naver.com/p/entry/place/1887191734">우사기</a> закрывается в 18:00.</li>
+  </ul>
+  <h3>Пятница 16 октября. KTX в 10:17 с вокзала Пусан</h3>
+  <ul>
+    <li>Завтрак в <a href="https://map.naver.com/p/entry/place/13485911">본전돼지국밥</a>: открывается в 08:40, 5 минут от выхода 5 вокзала. 영동 и 정짓간 открываются в 10:00, не успеть.</li>
+    <li>Чайнатаун (장만옥, 홍성방) открывается в 11:00, только если будете у вокзала в другой день.</li>
+  </ul>
+  <footer>Статус «открыто» считается по сеульскому времени из часов в карточках Naver на 14 октября; праздничные дни и внезапные выходные он не знает, перед дорогой стоит глянуть карточку.</footer>
+</section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+  // t: {o,c,b:[s,e],lo,off:[js weekday numbers 0=Sun]} or '24h'; h: human string shown next to status
+  var D = {
+  gukbap: [
+    {id:1291947123,ll:[129.118872,35.154525],kr:'부산토박이돼지국밥 광안본점',ru:'Пусан-тхобаги · Кваналли',vr:16865,sc:4.85,bl:853,t:'24h',h:'круглосуточно',pr:'вкус, порции, свежесть, большой зал',no:'Самое отзываемое место в городе. Любой кукпаб 11 000 ₩.',chip:'15 окт вечер'},
+    {id:20299805,ll:[128.980121,35.162183],kr:'합천일류돼지국밥',ru:'Хапчхон Ирю · Сасан, далеко от маршрута',vr:13484,sc:4.39,bl:6729,t:'24h',h:'круглосуточно',pr:'вкус, порции, большой зал'},
+    {id:1185023911,ll:[129.170632,35.159773],kr:'극동돼지국밥',ru:'Кыктон · Хэундэ, 1 мин от станции Мипхо',vr:11011,sc:4.81,bl:2953,t:{o:'08:00',c:'21:00',lo:'20:30'},h:'08:00–21:00, заказ до 20:30',pr:'вкус, свежесть, большой зал, «детям нравится мягкий 살코기국밥»',no:'Кукпаб 11 000, 수육백반 13 000.',chip:'Blueline Park'},
+    {id:37535404,ll:[129.134263,35.156704],kr:'수변최고돼지국밥 민락본점',ru:'Субён Чхвего · Кваналли, Минрак',vr:8532,sc:4.5,bl:7884,t:'24h',h:'круглосуточно',pr:'вкус, порции, особое меню',no:'성게폭탄국밥 с морским ежом, 3 порции в день, 50 000. 항정국밥 13 000, обычный 11 000.'},
+    {id:2084607249,ll:[129.039110,35.116022],kr:'정짓간 부산역점',ru:'Чонджитган · у вокзала Пусан',vr:7859,sc:4.87,bl:1144,t:{o:'10:00',c:'22:00',lo:'21:30'},h:'10:00–22:00',pr:'вкус, интерьер, свежесть',no:'В гиде Michelin. 방아국밥 с ароматными листьями 12 000, с чесноком из Ыйсона 11 000.'},
+    {id:13485911,ll:[129.041373,35.116606],kr:'본전돼지국밥',ru:'Пончжон · у вокзала Пусан, выход 5',vr:7693,sc:4.39,bl:7116,t:{o:'08:40',c:'21:00',lo:'20:30'},h:'08:40–21:00',pr:'вкус, свежесть, удобно одному',no:'Классика. Кукпаб 11 000, 수육백반 14 000. Подходит на завтрак перед KTX.',chip:'16 окт завтрак'},
+    {id:35643937,ll:[129.039320,35.116235],kr:'영동밀면&돼지국밥',ru:'Ёндон · у вокзала Пусан',vr:7521,sc:4.68,bl:10770,t:{o:'10:00',c:'20:30',lo:'20:10'},h:'10:00–20:30',pr:'вкус, цена и качество, свежесть',no:'Ещё и 밀면, холодная пшеничная лапша, 8 000. Кукпаб 10 000.'},
+    {id:37611484,ll:[129.164954,35.163162],kr:'할매집',ru:'Хальмэджип · Хэундэ, у администрации района',vr:5836,sc:4.7,bl:2006,t:{o:'09:00',c:'21:00',lo:'20:35'},h:'09:00–21:00',pr:'вкус, большой зал, цена',no:'Кукпаб 9 500.'},
+    {id:38009827,ll:[129.159966,35.162573],kr:'해운대 오복돼지국밥',ru:'Обок · Хэундэ, 5 мин от метро',vr:5092,sc:4.59,bl:3035,t:'24h',h:'круглосуточно',pr:'вкус, вежливость, чистота'},
+    {id:20601620,ll:[129.160371,35.161523],kr:'밀양순대돼지국밥 부산본점',ru:'Мирян · Хэундэ',vr:6636,sc:4.29,bl:3630,t:'24h',h:'круглосуточно',pr:'вкус, большой зал',no:'С кровяной колбасой 순대 11 500.'},
+    {id:13572698,ll:[129.056174,35.140985],kr:'60년전통할매국밥',ru:'60-летняя Хальмэ · Помиль, Тонгу',vr:2737,sc:4.34,bl:2653,t:{o:'10:00',c:'19:00',lo:'18:30',off:[0]},h:'10:00–19:00, воскресенье выходной',pr:'цена, порции, очередь',no:'Кукпаб 8 000. В блогах «кукпаб-символ Пусана».'},
+    {id:718740707,ll:[129.025856,35.098357],kr:'일등가마솥돼지국밥 남포점',ru:'Ильдын камасот · Нампо, у площади BIFF',vr:620,sc:4.47,bl:461,t:'24h',h:'круглосуточно',pr:'вкус, цена, удобно одному',no:'Ближайший приличный к Чагальчхи. Кукпаб 8 000.',chip:'14 окт'}
+  ],
+  fish: [
+    {id:11672174,ll:[129.164430,35.162381],kr:'금수복국 해운대본점',ru:'Кымсу поккук · Хэундэ, за администрацией',vr:8466,sc:4.33,bl:5295,t:'24h',h:'круглосуточно (1 этаж)',pr:'вкус, свежесть, особое меню',no:'은복국 15 000, 밀복국 22 000. 지리 прозрачный, 탕 острый.',chip:'15 окт'},
+    {id:32873338,ll:[129.169986,35.161097],kr:'해운대기와집대구탕',ru:'Киваджип тэгутхан · Хэундэ, Тальмаджи',vr:5988,sc:4.33,bl:2542,t:{o:'08:00',c:'20:40',lo:'20:10'},h:'08:00–20:40',pr:'вкус, свежесть, порции, вид',no:'Одно блюдо: 대구탕 16 000.'},
+    {id:11833768,ll:[129.170838,35.158835],kr:'속씨원한 대구탕 미포 본점',ru:'Соксивонхан · Хэундэ, у станции Мипхо',vr:4791,sc:4.44,bl:1686,t:{o:'08:00',c:'21:00',b:['15:00','16:00'],lo:'20:30'},h:'08:00–21:00, перерыв 15:00–16:00',pr:'вкус, свежесть, большой зал',no:'대구탕 16 000, жареная треска 16 000.',chip:'Blueline Park'},
+    {id:1403071817,ll:[129.016422,35.075952],kr:'속시원해대구탕 송도본점',ru:'Соксивонхэ · Сондо, у входа на пляж',vr:2119,sc:4.31,bl:482,t:{o:'07:00',c:'22:00'},h:'07:00–22:00, вс до 21:00',pr:'острый бульон, порции, цена',chip:'у отеля'},
+    {id:11596248,ll:[129.170458,35.158870],kr:'박옥희 할매집원조복국',ru:'Пак Окхи · Хэундэ, Мипхо',vr:1687,sc:4.39,bl:898,t:'24h',h:'круглосуточно',pr:'порции, вид',no:'은복국 14 000.'}
+  ],
+  haejang: [
+    {id:1402129199,ll:[129.114741,35.150298],kr:'바로해장',ru:'Паро хэджан · Кваналли, у метро 금련산',vr:9126,sc:4.71,bl:2879,t:{o:'09:00',c:'22:00',b:['15:30','16:30'],lo:'21:00'},h:'09:00–22:00, перерыв 15:30–16:30',pr:'вкус, порции, особое меню',no:'진짜 해장국 12 000, 소한마리해장국 15 000.'},
+    {id:1776538517,ll:[129.163366,35.161873],kr:'진우린해장',ru:'Чинурин · Хэундэ, 7 мин от метро',vr:8871,sc:4.89,bl:1238,t:'24h',h:'круглосуточно',pr:'вкус, качество мяса, большой зал',no:'갈비해장국 и 갈비탕 на рёбрах 15 000.'}
+  ],
+  sando: [
+    {id:1887191734,ll:[129.118847,35.157545],kr:'우사기',ru:'Усаги · Кванан, у школы 한바다중',vr:2426,sc:4.93,bl:635,t:{o:'11:00',c:'18:00',off:[1,2]},h:'11:00–18:00, пн и вт выходные',pr:'десерты, напитки, интерьер',no:'В блогах «сандо-место номер один». Дынный 7 500, мандариновый 7 000, фруктовый микс.'},
+    {id:2007508153,ll:[129.066867,35.155125],kr:'하루와 카페',ru:'Харува · Чонпо, 3 мин от 전포역 выход 8',vr:1611,sc:4.93,bl:78,t:{o:'11:30',c:'21:00',off:[1]},h:'11:30–21:00, понедельник выходной',pr:'десерты, интерьер, кофе',no:'후르츠믹스산도 8 500. Клубничное парфе 14 000, инжирное 13 000.',chip:'клубника'},
+    {id:1757086600,ll:[129.030415,35.100550],kr:'신창동커피 부산 남포점',ru:'Синчхандон · Нампо, Кванбокро, 2 этаж',vr:1262,sc:4.75,bl:984,t:{o:'12:00',c:'21:00',lo:'20:20'},h:'12:00–21:00, сб-вс с 11:00',pr:'десерты, кофе, интерьер',no:'«Сандо, полное фруктов». 두바이딸기산도 с летней клубникой 17 500, персиковый 13 900, инжирное парфе.',chip:'клубника · 14 окт'},
+    {id:1969922076,ll:[129.121801,35.157415],kr:'연의양과 광안점',ru:'Ёнъи янгва · Кваналли, Минрак',vr:2669,sc:4.89,bl:1707,t:{o:'11:00',c:'22:00',lo:'21:45'},h:'11:00–22:00',pr:'десерты, особое меню, интерьер',no:'Инжирный сандо 9 000, дынный 9 000, канеле 3 000.',chip:'15 окт вечер'},
+    {id:1777650825,ll:[129.157617,35.164307],kr:'듀플릿 해리단길점',ru:'Дюплит · Хэундэ, 3 мин от метро',vr:6978,sc:4.82,bl:1739,t:{o:'09:00',c:'22:00'},h:'09:00–22:00',pr:'кофе, интерьер, десерты, фото',no:'후르츠산도 8 500, торт с манго 9 000.',chip:'15 окт'},
+    {id:1773913590,ll:[129.066669,35.153558],kr:'산애카페',ru:'Санэ · Чонпо, 전포역 выход 6',vr:813,sc:4.87,bl:561,t:{o:'12:00',c:'21:00',lo:'20:30',off:[2]},h:'12:00–21:00, вторник выходной',pr:'кофе, интерьер, десерты',no:'후르츠산도 8 000, инжир с эрл-греем 8 000, молочный чай с мороженым.'},
+    {id:1921462556,ll:[129.067296,35.158069],kr:'웨드',ru:'Вэд · Чонпо, у рынка 전포놀이터시장',vr:617,sc:4.86,bl:484,t:{o:'12:00',c:'24:00'},h:'12:00–24:00',pr:'десерты, кофе, интерьер',no:'Йогуртовые моти с инжиром, мускатом, мандарином. Открыт до полуночи.'},
+    {id:1943916454,ll:[129.066765,35.158977],kr:'무화',ru:'Муха · Чонпо',vr:530,sc:5.0,bl:516,t:{o:'11:00',c:'19:00',lo:'18:30',off:[4]},h:'11:00–19:00, четверг выходной',pr:'десерты, кофе, интерьер',no:'후르츠산도 8 500.'},
+    {id:1657655257,ll:[128.979131,35.139742],kr:'오르디 ORRD',ru:'Орди · Сасан, далеко от маршрута',vr:3077,sc:4.89,bl:3046,t:{o:'11:00',c:'23:00'},h:'11:00–23:00',pr:'десерты, кофе, интерьер, фото',no:'Большая бесплатная парковка, бинсу.'}
+  ],
+  jjajang: [
+    {id:13221518,ll:[129.081175,35.064593],kr:'태종대짬뽕',ru:'Тхэчжондэ ччампон · Ёндо, по дороге к Тхэчжондэ',vr:8340,sc:4.68,bl:1006,t:{o:'10:00',c:'21:30',lo:'20:55',off:[3]},h:'10:00–21:30, среда выходной',pr:'вкус, большой зал, свежесть, чистота',no:'Чачжанмён 6 000, чампон 10 000, фирменный 태종대짬뽕 13 000.'},
+    {id:1229640570,ll:[129.040345,35.093659],kr:'또시아',ru:'Ттосиа · Ёндо, у моста из Нампо',vr:7291,sc:4.88,bl:1015,t:{o:'11:30',c:'21:30',b:['15:00','17:00'],off:[2]},h:'11:30–21:30, перерыв 15:00–17:00, вторник выходной',pr:'вкус, особое меню, свежесть, порции',no:'«Жемчужина Ёндо». Тайваньская говяжья лапша 12 000, 꿔바로우 15 000.',chip:'14 окт'},
+    {id:1302139880,ll:[129.196474,35.175490],kr:'송정돌짬뽕',ru:'Сончжон тольччампон · Сончжон, между Хэундэ и Ёнгунса',vr:6300,sc:4.87,bl:773,t:{o:'11:00',c:'21:00',b:['15:30','17:00'],lo:'20:00'},h:'11:00–21:00, перерыв 15:30–17:00',pr:'вкус, свежесть, порции, особое меню',no:'Чачжан и чампон на раскалённом камне, порция на двоих 24 000–26 000. В блогах «обязательный пункт поездки».',chip:'15 окт'},
+    {id:944642399,ll:[129.062212,35.153039],kr:'라라관 서면본점',ru:'Лалагван · Сомён',vr:5416,sc:4.59,bl:2475,t:{o:'12:00',c:'24:00',lo:'22:40'},h:'12:00–24:00',pr:'вкус, свежесть, особое меню',no:'Сычуанская кухня и хого, не только лапша.'},
+    {id:1991153735,ll:[129.061633,35.153554],kr:'린선다이닝 서면본점',ru:'Линсон · Сомён, 2 этаж',vr:3848,sc:4.89,bl:1535,t:{o:'11:00',c:'22:00',b:['15:30','17:00'],lo:'21:20'},h:'11:00–22:00, перерыв 15:30–17:00 в будни',pr:'вкус, свежесть, интерьер',no:'Фирменный 파채간짜장 с луком 11 000. «Приватный китайский».'},
+    {id:1499213960,ll:[129.032104,35.098471],kr:'홍유단 남포본점',ru:'Хонъюдан · Нампо, 5 мин от метро',vr:3321,sc:4.71,bl:2893,t:{o:'11:00',c:'21:30',b:['15:30','16:30'],lo:'20:50'},h:'11:00–21:30, перерыв 15:30–16:30 в будни',pr:'вкус, свежесть, порции',no:'파김치 해물쟁반짜장 на двоих-троих 28 000.',chip:'14 окт'},
+    {id:38411440,ll:[129.124589,35.153239],kr:'홍유단 광안점',ru:'Хонъюдан · Кваналли, 2 этаж с видом на море',vr:2639,sc:4.66,bl:3398,t:{o:'11:30',c:'22:00',lo:'21:20'},h:'11:30–22:00',pr:'вкус, вид (1 024 голоса), свежесть',no:'삼선간짜장 11 000, чампон с абалоном 13 000.',chip:'15 окт вечер'},
+    {id:1591808071,ll:[129.183814,35.164565],kr:'부엌간 차이니즈 해운대점',ru:'Пуоккан · Хэундэ, Тальмаджи',vr:3437,sc:4.8,bl:876,t:{o:'11:00',c:'21:00',b:['15:00','16:30'],lo:'20:30'},h:'11:00–21:00, перерыв 15:00–16:30',pr:'вкус, интерьер, свежесть',no:'짜장면 8 000, 간짜장 с яйцом 10 000.'},
+    {id:1922277426,ll:[129.056915,35.155828],kr:'보배반점 서면점',ru:'Побэ панчжом · Сомён, за Lotte',vr:3094,sc:4.78,bl:936,t:{o:'11:00',c:'22:00',lo:'21:00'},h:'11:00–22:00',pr:'вкус, большой зал, порции',no:'쟁반짜장 с кальмаром 25 000, чампон на говядине 12 500.'},
+    {id:1237858993,ll:[129.037577,35.113316],kr:'장만옥',ru:'Чанманок · Чайнатаун у вокзала',vr:2307,sc:4.93,bl:167,t:{o:'11:00',c:'20:20',b:['15:00','16:30'],lo:'19:40',off:[1,2]},h:'11:00–20:20, перерыв 15:00–16:30, пн и вт выходные',pr:'вкус, цена, вежливость',no:'Чачжанмён 6 800, домашние пельмени 8 000.'},
+    {id:13572640,ll:[129.037815,35.113843],kr:'홍성방 본점',ru:'Хонсонбан · Чайнатаун, вокзал выход 1',vr:1899,sc:4.28,bl:4838,t:{o:'11:00',c:'21:00',b:['15:00','17:00'],lo:'20:30'},h:'11:00–21:00, перерыв 15:00–17:00',pr:'вкус, большой зал',no:'Старейший в Чайнатауне. Жареные пельмени 군만두 8 000, обеденные сеты 18–20 000.'},
+    {id:13572413,ll:[129.027041,35.102825],kr:'옥생관',ru:'Оксэнгван · Нампо, у рынка Кукче',vr:1876,sc:4.39,bl:963,t:{o:'11:30',c:'20:50',b:['14:20','16:00'],off:[2]},h:'11:30–20:50, перерыв 14:20–16:00, вторник выходной',pr:'вкус, свежесть',no:'«Традиционный 간짜장» 8 000, чачжанмён 6 000.',chip:'14 окт'},
+    {id:1002448222,ll:[129.130351,35.168735],kr:'딤딤섬 신세계 센텀시티점',ru:'Димдимсом · Центум, 9 этаж Shinsegae',vr:4311,sc:4.48,bl:3515,t:{o:'11:00',c:'21:00',lo:'20:30'},h:'11:00–21:00',pr:'вкус, особое меню',no:'Димсам. Сет на двоих 49 000.'}
+  ],
+  'shop-seomyeon': [
+    {id:12133966,ll:[129.056431,35.156825],kr:'롯데백화점 부산본점',ru:'Lotte Seomyeon · универмаг, Uniqlo в подвале',vr:25834,bl:16792},
+    {id:16770641,ll:[129.059132,35.155779],kr:'서면지하도상가 서면몰 · 부전몰 · 중앙몰',ru:'Подземный торговый город: сотни лавок недорогой одежды',vr:404,sc:4.36,bl:151},
+    {id:1398083033,ll:[129.060043,35.155100],kr:'피플 부산점',ru:'People · самый отзываемый 보세 в городе',vr:3923,sc:4.68},
+    {id:1175777167,ll:[129.061562,35.155554],kr:'서면 남녀공학',ru:'Унисекс-보세 в переулке у Lotte',vr:3127},
+    {id:1130395884,ll:[129.060346,35.155439],kr:'원트 부산서면점',ru:'Want · женская одежда',vr:2423,sc:4.47},
+    {id:1284764039,ll:[129.061771,35.155291],kr:'코앤클로 서면점',ru:'Co&Clo · базовые вещи',vr:2138},
+    {id:1523461132,ll:[129.059605,35.153013],kr:'원더플레이스 삼정타워점',ru:'Wonderplace · корейские стрит-бренды под одной крышей',vr:2810},
+    {id:1751922801,ll:[129.059442,35.154604],kr:'무신사 스탠다드 서면점',ru:'Musinsa Standard · 3 этажа корейского бейсика',vr:509},
+    {id:1768106282,ll:[129.067528,35.152316],kr:'마가린상점',ru:'Чонпо · аксессуары и мелочи',vr:2283},
+    {id:1712496895,ll:[129.068163,35.156837],kr:'노클레임',ru:'No Claim · Чонпо, импортные бренды, 3 этажа',vr:454,sc:4.72},
+    {id:1695370830,ll:[129.066155,35.157387],kr:'슬로우뮤지엄',ru:'Slow Museum · Чонпо, аксессуары',vr:621,sc:4.56},
+    {id:2036484098,ll:[129.064727,35.154137],kr:'단디 전포점',ru:'Данди · Чонпо, винтаж в подвале',vr:310}
+  ],
+  'shop-nampo': [
+    {id:13291279,ll:[129.036731,35.098348],kr:'롯데백화점 광복점',ru:'Lotte Gwangbok · универмаг у моста Ёндо, смотровая на крыше, Uniqlo',vr:12305,sc:4.45,bl:5746,chip:'14 окт'},
+    {id:1756505814,ll:[129.029306,35.098603],kr:'탑텐 광복대영시네마점',ru:'Topten · самый отзываемый магазин одежды Пусана, масс-маркет',vr:6282,sc:4.44,chip:'14 окт'},
+    {id:1820927874,ll:[129.032201,35.099101],kr:'에잇세컨즈 부산광복점',ru:'8 Seconds · масс-маркет Samsung',vr:1829},
+    {id:1968764180,ll:[129.033769,35.098390],kr:'스파오 남포점',ru:'SPAO · масс-маркет, 3 этажа',vr:589},
+    {id:1255117239,ll:[129.033683,35.098676],kr:'원더플레이스 광복FSS점',ru:'Wonderplace · стрит-бренды',vr:705,sc:4.51},
+    {id:1770574438,ll:[129.030802,35.101891],kr:'마리앙플러스 부산광복점',ru:'Мариан плюс · женская одежда',vr:1247},
+    {id:1474066200,ll:[129.033069,35.098802],kr:'ABC마트 ST 부산광복점',ru:'ABC Mart · кроссовки',vr:1375},
+    {id:13491723,ll:[129.028072,35.101129],kr:'국제시장',ru:'Рынок Кукче · ряды одежды, рядом ночной рынок 부평깡통시장',vr:306,sc:4.28,bl:3628}
+  ],
+  'shop-centum': [
+    {id:13067134,ll:[129.129715,35.168806],kr:'신세계백화점 센텀시티점',ru:'Shinsegae Centum · крупнейший универмаг мира, Dior, H&M, спа Spaland',vr:17923,sc:4.47},
+    {id:35816951,ll:[129.212769,35.192052],kr:'롯데프리미엄아울렛 동부산점',ru:'Lotte Premium Outlet · 10 мин от храма Хэдон Ёнгунса',vr:7264,bl:7555,chip:'15 окт'},
+    {id:33176575,ll:[129.235830,35.323847],kr:'부산프리미엄아울렛',ru:'Shinsegae Simon · аутлет, далеко на север',vr:4580,bl:4931}
+  ],
+  beach: [
+    {id:11491655,ll:[129.120141,35.154121],kr:'광안리해수욕장',ru:'Кваналли · пляж и мост Кванан с подсветкой, самое обсуждаемое место Пусана',vr:2342,sc:4.4,bl:41414,chip:'15 окт вечер'},
+    {id:11491806,ll:[129.158354,35.158144],kr:'해운대해수욕장',ru:'Хэундэ · главный пляж',vr:1291,sc:4.36,bl:19979,chip:'15 окт'},
+    {id:13491855,ll:[128.963234,35.047127],kr:'다대포해수욕장',ru:'Тадэпхо · закат и фонтан «мечты» (773 отзыва, ★4.78)',vr:573,sc:4.41,bl:11357},
+    {id:11491737,ll:[129.199469,35.178641],kr:'송정해수욕장',ru:'Сончжон · тихий пляж, сёрф, рядом с Ёнгунса',vr:559,sc:4.47,bl:7861},
+    {id:13491720,ll:[129.192412,35.160413],kr:'청사포',ru:'Чхонсапхо · рыбацкая бухта, маяки, конечная Blueline',vr:127,bl:2802,chip:'15 окт'},
+    {id:13338934,ll:[129.016242,35.059911],kr:'암남공원 · 송도구름산책로',ru:'Парк на мысу и облачная тропа над морем, у вашего отеля',vr:221,sc:4.47,bl:1899,chip:'у отеля'}
+  ],
+  walk: [
+    {id:37418047,ll:[129.043459,35.079860],kr:'흰여울문화마을',ru:'Хинёуль · белая деревня на обрыве Ёндо, 15 мин от Нампо',vr:389,sc:4.45,bl:12722,chip:'14 окт'},
+    {id:21884707,ll:[129.010439,35.098641],kr:'감천문화마을',ru:'Камчхон · цветная деревня на склоне',vr:809,sc:4.42,bl:9856,chip:'в плане'},
+    {id:12079965,ll:[129.086041,35.053784],kr:'태종대',ru:'Тхэчжондэ · скалы и маяк на юге Ёндо',vr:7424,sc:4.32,bl:8095},
+    {id:16855498,ll:[129.121300,35.132293],kr:'이기대해안산책로',ru:'Игидэ · прибрежная тропа с видом на мост Кванан',vr:85,sc:4.82,bl:1672},
+    {id:33461396,ll:[129.124512,35.100592],kr:'오륙도스카이워크',ru:'Орюкто · стеклянная площадка над морем',vr:252,bl:4509},
+    {id:11491874,ll:[129.152185,35.153920],kr:'동백섬',ru:'Тонбэксом · остров-парк у Хэундэ, рядом The Bay 101',vr:304,sc:4.4,bl:4480,chip:'15 окт'},
+    {id:13491814,ll:[129.184230,35.160752],kr:'해운대달맞이길',ru:'Тальмаджи · дорога «любования луной» над Хэундэ',vr:70,bl:2794},
+    {id:175704595,ll:[129.033535,35.118166],kr:'초량이바구길',ru:'Ибагу-киль · лестницы и история старого Пусана у вокзала',vr:14,bl:1159}
+  ],
+  mount: [
+    {id:36247128,ll:[129.081988,35.157195],kr:'황령산봉수대',ru:'Хваннёнсан · сигнальная вышка, лучший вид на ночной Пусан, такси до верха',vr:217,sc:4.3,bl:1740},
+    {id:12104500,ll:[129.068099,35.283957],kr:'범어사 · 금정산',ru:'Помоса и Кымчжонсан · главная гора Пусана и храм (блог 4 628 у храма)',vr:135,bl:4628},
+    {id:13490923,ll:[128.979929,35.116812],kr:'승학산',ru:'Сынхаксан · тростниковые поля 억새, пик именно в октябре',vr:53,bl:1430},
+    {id:16993282,ll:[129.144895,35.194304],kr:'장산',ru:'Чансан · гора над Хэундэ',vr:64,bl:1333},
+    {id:16742104,ll:[129.055146,35.082535],kr:'봉래산',ru:'Понгнэсан · гора на Ёндо, вид на порт',vr:41,bl:1229},
+    {id:1328539259,ll:[129.169769,35.159950],kr:'부산엑스더스카이',ru:'X the SKY · смотровая на 100 этаже LCT',vr:9609,bl:4161,chip:'15 окт'},
+    {id:594242077,ll:[129.023399,35.076643],kr:'송도해상케이블카',ru:'Канатка Сондо над морем · самая посещаемая достопримечательность по отзывам',vr:24138,sc:4.47,bl:6321,chip:'у отеля'},
+    {id:1287134328,ll:[129.191411,35.161241],kr:'해운대블루라인파크',ru:'Blueline Park · капсулы над морем от Мипхо до Чхонсапхо',vr:18638,bl:6785,chip:'в плане'},
+    {id:20058995,ll:[129.032342,35.101077],kr:'부산타워 · 용두산공원',ru:'Башня и парк над Нампо',vr:5960,sc:4.24,bl:2379,chip:'14 окт'},
+    {id:20380893,ll:[128.960823,35.052689],kr:'아미산전망대',ru:'Амисан · смотровая на дельту реки и закат у Тадэпхо',vr:50,bl:832}
+  ],
+  build: [
+    {id:11737443,ll:[129.223227,35.188555],kr:'해동용궁사',ru:'Хэдон Ёнгунса · храм на скалах',vr:262,sc:4.4,bl:17960,chip:'в плане'},
+    {id:20410180,ll:[129.126936,35.170835],kr:'영화의전당',ru:'Busan Cinema Center · гигантская консольная крыша с LED, Центум',vr:1655,bl:10554},
+    {id:16752569,ll:[129.080274,35.078543],kr:'국립해양박물관',ru:'Морской музей · стеклянная «капля» на Ёндо',vr:571,bl:7496},
+    {id:856308348,ll:[128.942738,35.109480],kr:'부산현대미술관',ru:'MOCA Busan · музей современного искусства на острове Ыльсукто',vr:701,bl:5868},
+    {id:35058096,ll:[129.152068,35.156587],kr:'더베이101',ru:'The Bay 101 · яхт-клуб, классический ночной кадр небоскрёбов в воде',vr:718,bl:5124,chip:'15 окт'},
+    {id:38502372,ll:[129.114693,35.176755],kr:'F1963',ru:'Старый завод Kiswire, ставший арт-пространством с Terarosa',vr:377,bl:5067},
+    {id:12228256,ll:[129.057114,35.168576],kr:'부산시민공원',ru:'Citizens Park · парк на месте американской базы, Сомён',vr:3860,sc:4.44,bl:10437},
+    {id:1068767893,ll:[129.145534,35.157783],kr:'마린시티',ru:'Marine City · район небоскрёбов у Хэундэ',vr:471,bl:1954},
+    {id:13346401,ll:[129.025857,35.101909],kr:'부평깡통시장',ru:'Рынок Канъ-тхон · ночной рынок еды в Нампо',vr:444,sc:4.19,bl:8463,chip:'14 окт вечер'}
+  ]};
+
+  var TABS=[['map','Карта'],['soup','Супы'],['sando','Сандо'],['jjajang','Чачжанмён'],['shop','Шопинг'],['sights','Места'],['plan','По дням']];
+
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function num(n){return n.toLocaleString('ru-RU')}
+  function mins(hm){var p=hm.split(':');return (+p[0])*60+(+p[1])}
+
+  function kstNow(){
+    var parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date());
+    var o={};parts.forEach(function(p){o[p.type]=p.value});
+    var wd=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(o.weekday);
+    var h=+o.hour; if(h===24)h=0;
+    return {wd:wd,m:h*60+(+o.minute),hh:o.hour==='24'?'00':o.hour,mm:o.minute};
+  }
+  var NOW=kstNow();
+  var RU_DAYS=['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+
+  function status(t){
+    if(!t)return null;
+    if(t==='24h')return ['ok','открыто, круглосуточно'];
+    if(t.off&&t.off.indexOf(NOW.wd)>=0)return ['bad','сегодня выходной'];
+    var o=mins(t.o),c=mins(t.c),m=NOW.m;
+    if(m<o)return ['warn','откроется в '+t.o];
+    if(m>=c)return ['bad','закрыто, с '+t.o];
+    if(t.b){var bs=mins(t.b[0]),be=mins(t.b[1]);if(m>=bs&&m<be)return ['warn','перерыв до '+t.b[1]]}
+    if(t.lo&&m>=mins(t.lo))return ['warn','заказы закончились в '+t.lo];
+    return ['ok','открыто до '+t.c];
+  }
+
+  function row(p){
+    var s=status(p.t);
+    var h='<article class="p">';
+    h+='<div><div class="kr">'+esc(p.kr)+'</div><div class="ru">'+esc(p.ru)+'</div></div>';
+    h+='<a class="map" href="https://map.naver.com/p/entry/place/'+p.id+'" target="_blank" rel="noopener">Naver ↗</a>';
+    var st=[];
+    if(p.vr!=null)st.push('<span><span class="n">'+num(p.vr)+'</span> отз.</span>');
+    if(p.sc!=null)st.push('<span>★'+p.sc.toFixed(2).replace(/0$/,'')+'</span>');
+    if(p.bl!=null)st.push('<span>блог <span class="n">'+num(p.bl)+'</span></span>');
+    if(p.chip)st.push('<span class="chip">'+esc(p.chip)+'</span>');
+    h+='<div class="stats">'+st.join('')+'</div>';
+    if(p.h){h+='<div class="hrs">'+(s?'<span class="st '+s[0]+'">'+esc(s[1])+'</span>':'')+'<span>'+esc(p.h)+'</span></div>'}
+    if(p.pr)h+='<p class="praise">Хвалят: <b>'+esc(p.pr)+'</b></p>';
+    if(p.no)h+='<p class="note">'+esc(p.no)+'</p>';
+    return h+'</article>';
+  }
+
+
+
+  // ---- map (Leaflet + Naver raster tiles) ----
+  var CAT={soup:{n:'Супы',c:'#0E6F7C'},sando:{n:'Сандо',c:'#C2417A'},jjajang:{n:'Чачжанмён',c:'#C47A12'},shop:{n:'Шопинг',c:'#6A4FBF'},sights:{n:'Места',c:'#2E8B57'}};
+  var GROUPCAT={gukbap:'soup',fish:'soup',haejang:'soup',sando:'sando',jjajang:'jjajang','shop-seomyeon':'shop','shop-nampo':'shop','shop-centum':'shop',beach:'sights',walk:'sights',mount:'sights',build:'sights'};
+  var HOTEL={kr:'브라운도트호텔 송도해수욕장점',ru:'Наш отель · Brown-Dot Songdo, 4 этаж',ll:[129.0170685,35.0767043],id:1165598524};
+  var NAVER_VER='1791456229';
+  var map=L.map('map',{zoomControl:true,zoomSnap:0.5,worldCopyJump:false});
+  map.attributionControl.setPrefix(false);
+  function naverLayer(v){return L.tileLayer('https://map.pstatic.net/nrb/styles/basic/'+v+'/{z}/{x}/{y}@2x.png?mt=bg.ol.ts.lko',{tileSize:512,zoomOffset:-1,minZoom:7,maxZoom:20,maxNativeZoom:19,attribution:'карта © NAVER'})}
+  var base=naverLayer(NAVER_VER).addTo(map),fallback=false,errs=0;
+  base.on('tileerror',function(){errs++;if(errs>8&&!fallback){fallback=true;map.removeLayer(base);
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map)}});
+  try{fetch('https://map.pstatic.net/nrb/styles/basic.json?fmt=png&mt=bg.ol.ts.lko').then(function(r){return r.text()}).then(function(t){var m=t.match(/\/styles\/basic\/(\d{6,})\//);if(m&&m[1]!==NAVER_VER&&!fallback){map.removeLayer(base);base=naverLayer(m[1]).addTo(map)}}).catch(function(){})}catch(e){}
+  var groups={};Object.keys(CAT).forEach(function(k){groups[k]=L.layerGroup().addTo(map)});
+  function statsLine(p){var a=[];if(p.vr!=null)a.push(num(p.vr)+' отз.');if(p.sc!=null)a.push('★'+p.sc.toFixed(2).replace(/0$/,''));if(p.bl!=null)a.push('блог '+num(p.bl));return a.join(' · ')}
+  function popup(p){var s=status(p.t);var h='<div class="pp"><b class="kr">'+esc(p.kr)+'</b><div class="ru">'+esc(p.ru)+'</div>';
+    var st=statsLine(p);if(st)h+='<div class="stats">'+esc(st)+(p.chip?' <span class="chip">'+esc(p.chip)+'</span>':'')+'</div>';
+    if(p.h)h+='<div class="hrs">'+(s?'<span class="st '+s[0]+'">'+esc(s[1])+'</span> ':'')+esc(p.h)+'</div>';
+    if(p.pr)h+='<div class="praise">Хвалят: '+esc(p.pr)+'</div>';
+    if(p.no)h+='<div class="note">'+esc(p.no)+'</div>';
+    h+='<a class="map" href="https://map.naver.com/p/entry/place/'+p.id+'" target="_blank" rel="noopener">Открыть в Naver Map ↗</a></div>';return h}
+  var all=[];
+  Object.keys(D).forEach(function(g){var cat=GROUPCAT[g];D[g].forEach(function(p){if(!p.ll)return;
+    var m=L.circleMarker([p.ll[1],p.ll[0]],{radius:7,color:'#fff',weight:2,fillColor:CAT[cat].c,fillOpacity:1});
+    m.bindTooltip(p.kr,{direction:'top',offset:[0,-6],className:'pt'});
+    m.bindPopup(popup(p),{maxWidth:300,autoPanPadding:[20,60]});
+    m.addTo(groups[cat]);all.push([p.ll[1],p.ll[0]])})});
+  var hotelMk=L.circleMarker([HOTEL.ll[1],HOTEL.ll[0]],{radius:11,color:'#fff',weight:3,fillColor:'#E0352B',fillOpacity:1,pane:'markerPane'}).addTo(map);
+  hotelMk.bindTooltip('отель',{permanent:true,direction:'right',offset:[10,0],className:'hotel-label'});
+  hotelMk.bindPopup('<div class="pp"><b class="kr">'+esc(HOTEL.kr)+'</b><div class="ru">'+esc(HOTEL.ru)+'</div><a class="map" href="https://map.naver.com/p/entry/place/'+HOTEL.id+'" target="_blank" rel="noopener">Открыть в Naver Map ↗</a></div>');
+  var ALL=L.latLngBounds(all).extend([HOTEL.ll[1],HOTEL.ll[0]]);
+  var CORE=L.latLngBounds([[35.06,128.98],[35.20,129.20]]);
+  var inited=false;
+  function initMap(){if(inited)return;inited=true;map.invalidateSize();map.fitBounds(CORE,{padding:[10,10]})}
+  window.initMap=initMap;
+  document.getElementById('zhome').addEventListener('click',function(){map.setView([HOTEL.ll[1],HOTEL.ll[0]],16)});
+  document.getElementById('zall').addEventListener('click',function(){map.fitBounds(ALL,{padding:[16,16]})});
+  document.getElementById('zcore').addEventListener('click',function(){map.fitBounds(CORE,{padding:[10,10]})});
+  var lg=document.getElementById('legend');
+  lg.innerHTML=Object.keys(CAT).map(function(k){return '<label style="--c:'+CAT[k].c+'"><input type="checkbox" id="lg-'+k+'" checked><i></i>'+CAT[k].n+'</label>'}).join('')+'<label style="--c:#E0352B"><i></i>Отель</label>';
+  lg.addEventListener('change',function(e){var k=e.target.id.slice(3);if(!groups[k])return;e.target.closest('label').classList.toggle('off',!e.target.checked);
+    if(e.target.checked)map.addLayer(groups[k]);else map.removeLayer(groups[k])});
+  window.addEventListener('resize',function(){if(inited)map.invalidateSize()});
+
+  document.querySelectorAll('.list[data-group]').forEach(function(el){
+    var g=D[el.getAttribute('data-group')]||[];
+    el.innerHTML=g.map(row).join('');
+  });
+
+  var nowEl=document.getElementById('now');
+  nowEl.innerHTML='Сейчас в Пусане <b>'+NOW.hh+':'+NOW.mm+'</b>, '+RU_DAYS[NOW.wd]+' · статусы открытия считаются по этому времени';
+
+  var tabsEl=document.getElementById('tabs');
+  function show(key){
+    TABS.forEach(function(t){
+      var on=t[0]===key;
+      document.getElementById('tab-'+t[0]).classList.toggle('on',on);
+      var b=document.getElementById('btn-'+t[0]); if(b)b.setAttribute('aria-selected',on?'true':'false');
+      if(on&&t[0]==='map'&&window.initMap)window.initMap();
+    });
+    try{localStorage.setItem('busan-tab',key)}catch(e){}
+    if(location.hash!=='#'+key){try{history.replaceState(null,'','#'+key)}catch(e){}}
+  }
+  tabsEl.innerHTML=TABS.map(function(t){return '<button type="button" role="tab" id="btn-'+t[0]+'" aria-selected="false">'+t[1]+'</button>'}).join('');
+  tabsEl.addEventListener('click',function(e){var b=e.target.closest('button');if(b)show(b.id.slice(4))});
+  var start='map', hash=location.hash.replace('#','');
+  if(TABS.some(function(t){return t[0]===hash}))start=hash;
+  else{try{var saved=localStorage.getItem('busan-tab');if(saved&&TABS.some(function(t){return t[0]===saved}))start=saved}catch(e){}}
+  show(start);
+  window.addEventListener('hashchange',function(){var h=location.hash.replace('#','');if(TABS.some(function(t){return t[0]===h}))show(h)});
+})();
+</script>
+</body>
+</html>
