@@ -215,7 +215,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
   renderOpts(SANDO,document.getElementById('sando'));renderOpts(SANDO_SM,document.getElementById('sandoSM'));renderOpts(DINNER,document.getElementById('dinner'));
 
   // ---- map ----
-  var map=L.map('map',{zoomSnap:0.5});map.attributionControl.setPrefix(false);
+  var map=L.map("map",{zoomSnap:0.5});map.attributionControl.setPrefix(false);
   var NV='1791456229';
   function naverLayer(v){return L.tileLayer('https://map.pstatic.net/nrb/styles/basic/'+v+'/{z}/{x}/{y}@2x.png?mt=bg.ol.ts.lko',{tileSize:512,zoomOffset:-1,minZoom:7,maxZoom:20,maxNativeZoom:19,attribution:'карта © NAVER'})}
   var base=naverLayer(NV).addTo(map),errs=0,fb=false;
@@ -231,7 +231,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
   B.filter(function(s){return s.alt}).forEach(function(s){var m=L.marker([s.ll[1],s.ll[0]],{icon:icon('B','alt')}).addTo(map);m.bindTooltip('вариант B: '+s.kr,{direction:'top',offset:[0,-12],className:'pt'});m.bindPopup('<b>'+esc(s.kr)+'</b><br>'+esc(s.ru)+'<br>только в варианте B<br><a href="'+nl(s.id)+'" target="_blank" rel="noopener">Naver Map ↗</a>')});
   var ALL=L.latLngBounds(pathA).extend([35.1011289,129.0280715]);
   var WEST=L.latLngBounds([[35.148,129.05],[35.162,129.07]]),EAST=L.latLngBounds([[35.125,129.10],[35.17,129.185]]);
-  var inited=false;function initMap(){if(inited)return;inited=true;setTimeout(function(){map.invalidateSize();map.fitBounds(L.latLngBounds(pathA),{padding:[12,12]})},80)}
+  var inited=false,touched=false;map.on('dragstart zoomstart',function(){touched=true});function fitAll(){map.invalidateSize();map.fitBounds(L.latLngBounds(pathA),{padding:[12,12]})}function initMap(){if(inited)return;inited=true;setTimeout(fitAll,80);setTimeout(function(){if(!touched)fitAll()},600)}
   document.getElementById('zall').addEventListener('click',function(){map.fitBounds(ALL,{padding:[12,12]})});
   document.getElementById('zwest').addEventListener('click',function(){map.fitBounds(WEST,{padding:[8,8]})});
   document.getElementById('zeast').addEventListener('click',function(){map.fitBounds(EAST,{padding:[8,8]})});
