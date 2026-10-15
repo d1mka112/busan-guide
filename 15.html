@@ -231,7 +231,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
   [B[2],B[3]].forEach(function(s){var m=L.marker([s.ll[1],s.ll[0]],{icon:icon('B','alt')}).addTo(map);m.bindTooltip('вариант B: '+s.kr,{direction:'top',offset:[0,-12],className:'pt'});m.bindPopup('<b>'+esc(s.kr)+'</b><br>'+esc(s.ru)+'<br>только в варианте B<br><a href="'+nl(s.id)+'" target="_blank" rel="noopener">Naver Map ↗</a>')});
   var ALL=L.latLngBounds(pathA).extend([35.2839567,129.0680989]);
   var WEST=L.latLngBounds([[35.05,128.99],[35.11,129.07]]),EAST=L.latLngBounds([[35.12,129.07],[35.17,129.20]]);
-  var inited=false;function initMap(){if(inited)return;inited=true;map.invalidateSize();map.fitBounds(L.latLngBounds(pathA),{padding:[12,12]})}
+  var inited=false;function initMap(){if(inited)return;inited=true;setTimeout(function(){map.invalidateSize();map.fitBounds(L.latLngBounds(pathA),{padding:[12,12]})},80)}
   document.getElementById('zall').addEventListener('click',function(){map.fitBounds(ALL,{padding:[12,12]})});
   document.getElementById('zwest').addEventListener('click',function(){map.fitBounds(WEST,{padding:[8,8]})});
   document.getElementById('zeast').addEventListener('click',function(){map.fitBounds(EAST,{padding:[8,8]})});
