@@ -398,7 +398,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
   var ALL=L.latLngBounds(all).extend([HOTEL.ll[1],HOTEL.ll[0]]);
   var CORE=L.latLngBounds([[35.06,128.98],[35.20,129.20]]);
   var inited=false;
-  var touched=false;map.on('dragstart zoomstart',function(){touched=true});function fitCore(){map.invalidateSize();map.fitBounds(CORE,{padding:[10,10]})}function initMap(){if(inited)return;inited=true;setTimeout(fitCore,80);setTimeout(function(){if(!touched)fitCore()},600)}
+  var fitted=false,touched=false;map.on('dragstart',function(){touched=true});function fitCore(){var el=document.getElementById('map');if(!el.clientWidth||!el.clientHeight)return;map.invalidateSize();map.fitBounds(CORE,{padding:[10,10]});fitted=true}function initMap(){if(fitted)return;setTimeout(fitCore,80);setTimeout(function(){if(!fitted)fitCore()},600)}if(window.ResizeObserver){new ResizeObserver(function(){if(!fitted&&!touched)fitCore()}).observe(document.getElementById('map'))}
   window.initMap=initMap;
   document.getElementById('zhome').addEventListener('click',function(){map.setView([HOTEL.ll[1],HOTEL.ll[0]],16)});
   document.getElementById('zall').addEventListener('click',function(){map.fitBounds(ALL,{padding:[16,16]})});
