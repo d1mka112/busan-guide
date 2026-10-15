@@ -303,7 +303,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
     {id:16742104,ll:[129.055146,35.082535],kr:'봉래산',ru:'Понгнэсан · гора на Ёндо, вид на порт',vr:41,bl:1229},
     {id:1328539259,ll:[129.169769,35.159950],kr:'부산엑스더스카이',ru:'X the SKY · смотровая на 100 этаже LCT',vr:9609,bl:4161,chip:'15 окт'},
     {id:594242077,ll:[129.023399,35.076643],kr:'송도해상케이블카',ru:'Канатка Сондо над морем · самая посещаемая достопримечательность по отзывам',vr:24138,sc:4.47,bl:6321,chip:'у отеля'},
-    {id:1287134328,ll:[129.191411,35.161241],kr:'해운대블루라인파크',ru:'Blueline Park · капсулы над морем от Мипхо до Чхонсапхо',vr:18638,bl:6785,chip:'в плане'},
+    {id:1287134328,ll:[129.191411,35.161241],kr:'해운대블루라인파크',ru:'Blueline Park · капсулы над морем от Мипхо до Чхонсапхо',vr:18638,bl:6785,chip:'в плане',no:'Бронь на сайте парка: поезд, капсула или пакет. Билеты на неделю открываются по вторникам в 07:00 за 4 недели, у кассы продают немного билетов в порядке живой очереди.',links:[{url:'https://www.tbluelinepark.com/ticket/GD2000441',label:'Поезд от Мипхо'},{url:'https://www.tbluelinepark.com/ticket/GD2100036',label:'Капсула от Мипхо'},{url:'https://www.bluelinepark.com/booking.do',label:'Все билеты'}]},
     {id:20058995,ll:[129.032342,35.101077],kr:'부산타워 · 용두산공원',ru:'Башня и парк над Нампо',vr:5960,sc:4.24,bl:2379,chip:'14 окт'},
     {id:20380893,ll:[128.960823,35.052689],kr:'아미산전망대',ru:'Амисан · смотровая на дельту реки и закат у Тадэпхо',vr:50,bl:832}
   ],
@@ -361,6 +361,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
     if(p.h){h+='<div class="hrs">'+(s?'<span class="st '+s[0]+'">'+esc(s[1])+'</span>':'')+'<span>'+esc(p.h)+'</span></div>'}
     if(p.pr)h+='<p class="praise">Хвалят: <b>'+esc(p.pr)+'</b></p>';
     if(p.no)h+='<p class="note">'+esc(p.no)+'</p>';
+    if(p.links)h+='<p class="note">'+p.links.map(function(l){return '<a class="map" href="'+l.url+'" target="_blank" rel="noopener">'+esc(l.label)+' ↗</a>'}).join(' ')+'</p>';
     return h+'</article>';
   }
 
