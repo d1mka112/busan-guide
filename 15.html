@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<title>15 октября в Пусане</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a vertical timeline for a phone in hand; each stop is a row, each leg between stops is a thin connector with the transport choice. */
+:root{
+  --bg:#F2F5F7; --surface:#FFFFFF; --fg:#16222C; --muted:#5E6E7A; --line:#D7DFE5; --chip:#E4ECF0;
+  --accent:#0E6F7C; --accent-ink:#FFFFFF; --ok:#1E7F4F; --warn:#B7791F; --bad:#B23A3A; --hotel:#E0352B; --alt:#7A8792;
+  --display:"Golos Text","IBM Plex Sans","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E161C; --surface:#16222B; --fg:#E7EEF2; --muted:#9AACB8; --line:#27353F; --chip:#1F2E38;
+  --accent:#58C3CF; --accent-ink:#0B1418; --ok:#5FCF8E; --warn:#E0B35A; --bad:#F08383; --alt:#8A98A4; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E161C; --surface:#16222B; --fg:#E7EEF2; --muted:#9AACB8; --line:#27353F; --chip:#1F2E38;
+  --accent:#58C3CF; --accent-ink:#0B1418; --ok:#5FCF8E; --warn:#E0B35A; --bad:#F08383; --alt:#8A98A4; color-scheme:dark }
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:0 48px}
+img{max-width:100%} [hidden]{display:none!important}
+.wrap{max-width:760px;margin:0 auto}
+header.top{padding-block:22px 10px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,6vw,34px);letter-spacing:-.01em;line-height:1.1;margin:0 0 6px;text-wrap:balance}
+.sub{color:var(--muted);font-size:13.5px;margin:0}
+.sub a,.plan a,.note a{color:var(--accent);text-decoration:none;font-weight:600}
+.sub a:hover,.plan a:hover{text-decoration:underline}
+.now{margin-top:10px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.now b{color:var(--fg);font-weight:600}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);margin-inline:-16px;padding-inline:16px;padding-block:8px;border-bottom:1px solid var(--line)}
+nav.tabs .row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav.tabs .row::-webkit-scrollbar{display:none}
+nav.tabs button{flex:0 0 auto;appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 13.5px var(--display);padding:8px 13px;border-radius:999px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.tab{display:none;padding-top:14px} section.tab.on{display:block}
+.lead{color:var(--muted);font-size:14px;margin:0 0 14px;max-width:62ch} .lead b{color:var(--fg);font-weight:600}
+h2{font-family:var(--display);font-weight:700;font-size:19px;margin:22px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+h2:first-child{margin-top:4px}
+.totals{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.totals div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.totals b{display:block;color:var(--fg);font:700 16px var(--display)}
+.tl{list-style:none;margin:0;padding:0}
+.stop{display:grid;grid-template-columns:44px minmax(0,1fr);gap:0 12px;padding:12px 0;border-top:1px solid var(--line)}
+.stop:first-child{border-top:0}
+.stop.now{background:linear-gradient(90deg,transparent,var(--chip));border-radius:10px;margin-inline:-8px;padding-inline:8px}
+.num{width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:800 15px var(--display);display:flex;align-items:center;justify-content:center;margin-top:2px}
+.num.hotel{background:var(--hotel);color:#fff}
+.num.food{background:#C47A12;color:#fff}
+.time{font:700 13.5px var(--display);color:var(--fg);font-variant-numeric:tabular-nums}
+.time span{color:var(--muted);font-weight:500}
+.kr{font-family:var(--display);font-weight:700;font-size:16.5px;line-height:1.25;margin-top:2px;overflow-wrap:anywhere}
+.ru{color:var(--muted);font-size:13px}
+.what{margin:5px 0 0;font-size:14px;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12.5px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
+.st{display:inline-block;font:600 11.5px var(--display);padding:2px 7px;border-radius:999px;background:var(--chip);color:var(--fg)}
+.st.ok{color:var(--ok)} .st.warn{color:var(--warn)} .st.bad{color:var(--bad)}
+.map{display:inline-flex;align-items:center;gap:4px;background:var(--chip);color:var(--accent);text-decoration:none;font:600 12px var(--display);padding:5px 9px;border-radius:7px;white-space:nowrap;margin-top:6px}
+.leg{display:grid;grid-template-columns:44px minmax(0,1fr);gap:0 12px;padding:2px 0 8px}
+.leg .bar{justify-self:center;width:2px;background:var(--line);min-height:28px;border-radius:2px}
+.leg .how{font-size:13px;color:var(--muted);padding:2px 0}
+.leg .how b{color:var(--fg);font-weight:600}
+.leg .how .alt{display:block;font-size:12.5px}
+.opts{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.opt{padding:11px 14px;border-top:1px solid var(--line)} .opt:first-child{border-top:0}
+.opt .kr{font-size:15.5px}
+.plan h3{font-family:var(--display);font-size:17px;margin:18px 0 6px}
+.plan p,.plan li{max-width:65ch} .plan ul{padding-left:18px;margin:0 0 8px} .plan li{margin:4px 0}
+.mapbtns{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.mapbtns button{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 12.5px var(--display);padding:7px 11px;border-radius:999px;cursor:pointer}
+.mapbox{height:min(70vh,640px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#DCE8EE}
+.leaflet-container{font-family:var(--body);font-size:13px}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--fg)}
+.leaflet-popup-content{margin:10px 12px;line-height:1.35}
+.nmk{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);font:800 13px var(--display);display:flex;align-items:center;justify-content:center}
+.nmk.hotel{background:var(--hotel)} .nmk.alt{background:var(--alt)} .nmk.food{background:#C47A12}
+.leaflet-tooltip.pt{font:600 12px var(--display);padding:3px 7px;border-radius:6px;background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <h1>15 октября: план дня</h1>
+  <p class="sub">Четверг · старт из отеля Brown-Dot Songdo · закат 17:51 · время в пути снято с маршрутов Naver Map утром 15 октября · <a href="index.html">вся подборка по Пусану →</a></p>
+  <div class="now" id="now"></div>
+</header>
+
+<nav class="tabs" aria-label="Разделы"><div class="row" id="tabs"></div></nav>
+
+<section class="tab" id="tab-plan">
+  <p class="lead">Основной вариант: запад → Ёндо → Нампо → Хэундэ → Игидэ → Хваннёнсан → ужин на Кваналли. Часы указаны с запасом; <b>автобусы считаны с ожиданием 15–20 минут</b>, поэтому между дальними точками стоит такси. Что не влезло и как поменять — во вкладке «Варианты».</p>
+  <div class="totals" id="totals"></div>
+  <ol class="tl" id="tl"></ol>
+</section>
+
+<section class="tab" id="tab-map">
+  <p class="lead">Нумерация как в плане. Серые точки — вариант B (Сомён и храм Помоса). Красная — отель. Карта Naver, приближается до улиц.</p>
+  <div class="mapbtns"><button type="button" id="zall">Весь маршрут</button><button type="button" id="zwest">Утро: Сондо и Ёндо</button><button type="button" id="zeast">Вечер: Хэундэ и Кваналли</button></div>
+  <div id="map" class="mapbox" aria-label="Карта маршрута"></div>
+</section>
+
+<section class="tab plan" id="tab-alt">
+  <p class="lead">Полный список желаний в один день не укладывается: два дальних выброса (храм Помоса на север, Blueline на восток) плюс завтрак и ужин. Ниже — что стоит каждая точка и вариант B, где вместо утра на побережье едут в центр и к Помосе.</p>
+  <h2>Что не влезло в основной план</h2>
+  <ul>
+    <li><b>범어사 Помоса.</b> Самый дорогой пункт: 45–47 минут на такси от Нампо или Сомёна (около 25 000 ₩ в одну сторону), на метро и автобусе 1 час 12 минут. Храм открыт до 17:00. Влезает только в вариант B, вместо парка Амнам и Ёндо.</li>
+    <li><b>Сомён (центр) и Uniqlo в Сомёне.</b> Плюс 1 час 20 минут на крюк. В основном плане закрыто магазином Uniqlo в Lotte Gwangbok в Нампо: сам Нампо и есть старый центр (중구).</li>
+    <li><b>75광장.</b> Самая малопопулярная точка списка (145 упоминаний в блогах против 12 722 у соседнего Хинёуля). Стоит 45 минут с переездами. Если снять, появится запас на очереди в Blueline.</li>
+    <li><b>Полный круг парка Амнам</b> — 50 минут. Короткий вариант: облачная тропа 송도구름산책로 над морем, 15 минут, она на пути.</li>
+  </ul>
+  <h2>Вариант B: центр и Помоса, без Амнама и Ёндо</h2>
+  <ol class="tl" id="tlB"></ol>
+  <p class="note">Такси в варианте B: около 3 часов 20 минут и 99 000 ₩. Закат встречаете в поезде Blueline, Игидэ смотрите уже с подсветкой моста.</p>
+</section>
+
+<section class="tab" id="tab-food">
+  <h2>Сандо у Нампо</h2>
+  <p class="lead">Рядом с рынком Кукче и Кванбокро. Клубничный сезон начинается в конце ноября, сейчас инжир, персик, мускат.</p>
+  <div class="opts" id="sando"></div>
+  <h2>Ужин на Кваналли, 2 часа</h2>
+  <p class="lead">Все в 10–15 минутах от Хваннёнсана, после ужина — набережная с подсвеченным мостом.</p>
+  <div class="opts" id="dinner"></div>
+  <h2>Завтрак, 1 час</h2>
+  <div class="opts" id="bfast"></div>
+</section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function kst(){var o={};new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',weekday:'short',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).forEach(function(p){o[p.type]=p.value});var h=+o.hour;if(h===24)h=0;return {m:h*60+(+o.minute),hh:(h<10?'0':'')+h,mm:o.minute}}
+  var NOW=kst();
+  function mins(t){var p=t.split(':');return (+p[0])*60+(+p[1])}
+  function nl(url){return 'https://map.naver.com/p/entry/place/'+url}
+
+  // Plan A. ll=[lon,lat]. leg = how to get to the NEXT stop.
+  var A=[
+    {t:'09:45',e:'10:45',kind:'food',kr:'속시원해대구탕 송도본점',ru:'Завтрак, 1 час · в минуте от отеля',what:'Суп из трески 대구탕 16 000 ₩, открыто с 07:00. Если хочется кукпаб — 일등가마솥돼지국밥 у BIFF (круглосуточно), тогда завтрак в Нампо и порядок утра меняется.',hrs:'07:00–22:00',id:1403071817,ll:[129.016422,35.0759522],
+      leg:{taxi:'5 мин · ~4 900 ₩',alt:'пешком вдоль пляжа 56 мин — долго'}},
+    {t:'10:50',e:'11:40',kr:'암남공원 · 송도구름산책로',ru:'Парк Амнам и облачная тропа над морем',what:'Прибрежная тропа по мысу, 40–50 минут. Короткий вариант: только 송도구름산책로 (15 минут) и смотровая у входа.',hrs:'тропа 06:00–23:00, парк всегда',id:13338934,ll:[129.0162416,35.0599107],
+      leg:{taxi:'17 мин · ~9 000 ₩',alt:'автобус 71: 56 мин + ожидание 15–20'}},
+    {t:'11:55',e:'12:20',kr:'75광장',ru:'Площадь 75 · смотровая над морем, Ёндо',what:'Вид на скалы и открытое море, 20–25 минут. По популярности слабая точка, но она ровно по дороге к Хинёулю.',hrs:'всегда',id:19589188,ll:[129.0579656,35.0706108],
+      leg:{taxi:'7 мин · ~5 500 ₩',alt:'по той же дороге 절영로'}},
+    {t:'12:30',e:'13:10',kr:'흰여울문화마을',ru:'Хинёуль · белая деревня на обрыве',what:'Прибрежная дорожка и тоннель под деревней, 40 минут. 12 722 упоминания в блогах, одно из главных мест Ёндо.',hrs:'всегда',id:37418047,ll:[129.0434588,35.0798603],
+      leg:{taxi:'11 мин · ~6 100 ₩',alt:'автобус 6, 7 или 9: 28 мин + ожидание'}},
+    {t:'13:20',e:'15:10',kr:'국제시장 · 부평깡통시장 · 광복로',ru:'Рынок Кукче, рынок Канъ-тхон, Кванбокро · старый центр',what:'Рынок и перекус (씨앗호떡, 비빔당면, 어묵), сандо в 신창동커피 (290 м от рынка), Uniqlo в 롯데백화점 광복점 (13 минут пешком, 2 этаж Aqua Mall). Это и есть «центр» старого Пусана, район 중구.',hrs:'рынки 09:00–20:00 · Lotte 10:30–20:00 · сандо 12:00–21:00',id:13491723,ll:[129.0280715,35.1011289],
+      leg:{taxi:'37 мин · ~22 700 ₩ (от Lotte Gwangbok)',alt:'экспресс-автобус 3001 + автобус: 1 ч 13 + ожидание; метро 1→2 линия и 19 мин пешком: 1 ч 13'}},
+    {t:'15:50',e:'17:00',kr:'해운대블루라인파크 미포정거장',ru:'Blueline Park · «знаменитые трамваи» вдоль моря',what:'Пляжный поезд Мипхо → Чхонсапхо 30 минут (билеты на месте), у маяков Чхонсапхо 20 минут, обратно поездом или такси. Капсулы Sky Capsule только по брони на bluelinepark.com, обычно разобраны.',hrs:'в октябре 09:00–19:30',id:1007574852,ll:[129.1728559,35.1581380],
+      leg:{taxi:'33 мин · ~12 100 ₩ через мост Кванан',alt:'метро 2 линия + маршрутка: 1 ч 11 + ожидание'}},
+    {t:'17:35',e:'18:15',kr:'이기대 동생말전망대',ru:'Игидэ · смотровая Тонсэнмаль и начало тропы',what:'Закат в 17:51 с видом на мост Кванан, после 18:10 мост подсвечен. Полная тропа 1,5 часа — не сегодня, достаточно смотровой и первых 15 минут.',hrs:'всегда, тропа частично освещена',id:1251102706,ll:[129.1211984,35.1320022],
+      leg:{taxi:'16 мин · ~8 500 ₩, такси довозит до стоянки у вышки',alt:'транспортом 2 часа — не вариант'}},
+    {t:'18:30',e:'19:00',kr:'황령산봉수대',ru:'Хваннёнсан · ночная панорама города',what:'Сигнальная вышка, 5–10 минут пешком от стоянки. Темнеет к 18:20, к 18:30 город уже в огнях.',hrs:'всегда',id:36247128,ll:[129.0819884,35.1571948],
+      leg:{taxi:'15 мин · ~8 200 ₩',alt:'транспортом 1 ч 09 — не вариант'}},
+    {t:'19:15',e:'21:15',kind:'food',kr:'광안리 · ужин',ru:'Кваналли · ужин, 2 часа',what:'Варианты во вкладке «Еда»: 부산토박이돼지국밥 (круглосуточно, рекорд по отзывам), 홍유단 광안점 (чачжанмён с видом на мост, до 22:00), 수변최고돼지국밥 (круглосуточно). После — набережная.',hrs:'',id:1291947123,ll:[129.1188715,35.1545246],
+      leg:{taxi:'32 мин · ~16 600 ₩',alt:'автобус 41 или 42: 1 ч 09 + ожидание'}},
+    {t:'21:50',e:'',kind:'hotel',kr:'브라운도트호텔 송도해수욕장점',ru:'Отель',what:'',hrs:'',id:1165598524,ll:[129.0170685,35.0767043]}
+  ];
+  var B=[
+    {t:'09:45',e:'10:45',kind:'food',kr:'속시원해대구탕 송도본점',ru:'Завтрак у отеля',what:'',hrs:'',id:1403071817,ll:[129.016422,35.0759522],leg:{taxi:'11 мин · ~6 700 ₩',alt:'автобус 96 или 26: 23 мин + ожидание'}},
+    {t:'11:00',e:'12:40',kr:'국제시장 · 부평깡통시장',ru:'Рынки Нампо, сандо в 신창동커피',what:'',hrs:'',id:13491723,ll:[129.0280715,35.1011289],leg:{taxi:'метро 1 линия 자갈치 → 서면: 33 мин от двери до двери',alt:'такси 24 мин · ~11 300 ₩'}},
+    {t:'13:20',e:'14:00',kr:'서면 · 유니클로 롯데백화점 서면점',ru:'Сомён, центр · Uniqlo в Lotte (10:30–21:00) или в 삼정타워 (11:00–22:00)',what:'',hrs:'',id:16406007,ll:[129.0560055,35.1566596],leg:{taxi:'47 мин · ~25 000 ₩',alt:'метро 1 линия до 범어사역 + автобус 90: 1 ч 12 + ожидание'}},
+    {t:'14:50',e:'15:50',kr:'범어사',ru:'Храм Помоса · открыт до 17:00',what:'',hrs:'',id:12104500,ll:[129.0680989,35.2839567],leg:{taxi:'46 мин · ~21 900 ₩',alt:'транспортом 1 ч 40 с двумя пересадками — не вариант'}},
+    {t:'16:40',e:'17:40',kr:'해운대블루라인파크',ru:'Blueline, закат в поезде',what:'',hrs:'',id:1007574852,ll:[129.1728559,35.1581380],leg:{taxi:'33 мин · ~12 100 ₩',alt:''}},
+    {t:'18:15',e:'18:45',kr:'이기대 동생말전망대',ru:'Игидэ с подсветкой моста',what:'',hrs:'',id:1251102706,ll:[129.1211984,35.1320022],leg:{taxi:'16 мин · ~8 500 ₩',alt:''}},
+    {t:'19:00',e:'19:30',kr:'황령산봉수대',ru:'Хваннёнсан',what:'',hrs:'',id:36247128,ll:[129.0819884,35.1571948],leg:{taxi:'15 мин · ~8 200 ₩',alt:''}},
+    {t:'19:45',e:'21:45',kind:'food',kr:'광안리 · ужин',ru:'Кваналли, 2 часа',what:'',hrs:'',id:1291947123,ll:[129.1188715,35.1545246],leg:{taxi:'32 мин · ~16 600 ₩',alt:''}},
+    {t:'22:20',e:'',kind:'hotel',kr:'브라운도트호텔 송도해수욕장점',ru:'Отель',what:'',hrs:'',id:1165598524,ll:[129.0170685,35.0767043]}
+  ];
+  function renderTL(list,el){
+    var h='';
+    list.forEach(function(s,i){
+      var cur=s.e&&NOW.m>=mins(s.t)&&NOW.m<mins(s.e);
+      h+='<li class="stop'+(cur?' now':'')+'"><div class="num'+(s.kind?' '+s.kind:'')+'">'+(s.kind==='hotel'?'⌂':(i+1))+'</div><div>';
+      h+='<div class="time">'+s.t+(s.e?' <span>– '+s.e+'</span>':'')+(cur?' <span class="st ok">сейчас</span>':'')+'</div>';
+      h+='<div class="kr">'+esc(s.kr)+'</div><div class="ru">'+esc(s.ru)+'</div>';
+      if(s.what)h+='<p class="what">'+esc(s.what)+'</p>';
+      if(s.hrs)h+='<div class="meta"><span>'+esc(s.hrs)+'</span></div>';
+      h+='<a class="map" href="'+nl(s.id)+'" target="_blank" rel="noopener">Naver ↗</a>';
+      h+='</div></li>';
+      if(s.leg){h+='<li class="leg"><div class="bar"></div><div class="how"><b>'+esc(s.leg.taxi)+'</b>'+(s.leg.alt?'<span class="alt">'+esc(s.leg.alt)+'</span>':'')+'</div></li>'}
+    });
+    el.innerHTML=h;
+  }
+  renderTL(A,document.getElementById('tl'));renderTL(B,document.getElementById('tlB'));
+  document.getElementById('totals').innerHTML='<div>Такси за день<b>≈ 2 ч 55 мин · ≈ 94 000 ₩</b>9 поездок</div><div>На ногах и в точках<b>≈ 6 ч 40 мин</b></div><div>Еда<b>1 ч + 2 ч</b>завтрак и ужин</div><div>Домой<b>≈ 21:50</b></div>';
+  document.getElementById('now').innerHTML='Сейчас в Пусане <b>'+NOW.hh+':'+NOW.mm+'</b> · текущий пункт подсвечен';
+
+  var SANDO=[
+    {kr:'신창동커피 부산 남포점',ru:'Кванбокро, 2 этаж · 290 м от рынка · 1 262 отзыва, блог 984',what:'«Сандо, полное фруктов». 두바이딸기산도 с летней клубникой 17 500, 통복숭아 산도 13 900, инжирное парфе. Главный кандидат.',hrs:'12:00–21:00',id:1757086600},
+    {kr:'파페코',ru:'Кванбок-чунъанно · 220 м от рынка · 84 отзыва ★4.88',what:'Маленькое кафе с моти: 파페코 산도 7 000, фруктовые моти 4 000, шоколадные моти 5 000.',hrs:'10:00–21:00',id:2091118802},
+    {kr:'티플레그',ru:'у лестницы 40계단, 570 м · 216 отзывов ★4.39',what:'Кофейня с 후르츠산도 за 5 500 и фруктовыми капкейками. Только до 15:00.',hrs:'08:00–15:00',id:1116047588},
+    {kr:'6페이지',ru:'книжный переулок Посу-дон, 840 м · 95 отзывов ★4.9',what:'Хоттоки с мороженым и моти, сандо нет. Для прогулки по книжному переулку.',hrs:'12:00–18:00',id:1705442823},
+    {kr:'카페 멜팅보틀',ru:'Чунъан-дон, 740 м · 260 отзывов ★4.76',what:'Клубничное бутылочное молоко 6 000 и обычные сэндвичи, не сандо. Если хочется именно клубники.',hrs:'07:30–18:30',id:1191155877}
+  ];
+  var DINNER=[
+    {kr:'부산토박이돼지국밥 광안본점',ru:'Кваналли · 16 865 отзывов ★4.85 · круглосуточно',what:'Самое отзываемое место Пусана, любой кукпаб 11 000. Хвалят вкус, порции, свежесть.',hrs:'24 ч',id:1291947123},
+    {kr:'홍유단 광안점',ru:'Минрак, 2 этаж с видом на мост · 2 639 отзывов ★4.66',what:'Чачжанмён и чампон с видом на подсвеченный мост: 삼선간짜장 11 000, чампон с абалоном 13 000, 찹쌀탕수육 36 000.',hrs:'11:30–22:00, заказ до 21:20',id:38411440},
+    {kr:'수변최고돼지국밥 민락본점',ru:'Минрак · 8 532 отзыва ★4.5 · круглосуточно',what:'Кукпаб-сеты на двоих 39 000, 항정국밥 13 000; знаменитый 성게폭탄국밥 с морским ежом бывает только 3 порции в день.',hrs:'24 ч',id:37535404},
+    {kr:'바로해장',ru:'Кванан, у метро 금련산 · 9 126 отзывов ★4.71',what:'Густой говяжий 해장국 12 000 и 소한마리해장국 15 000, маленькое, бывает очередь.',hrs:'09:00–22:00, заказ до 21:00',id:1402129199}
+  ];
+  var BFAST=[
+    {kr:'속시원해대구탕 송도본점',ru:'в минуте от отеля · 2 119 отзывов ★4.31',what:'Острый суп из трески 16 000, хвалят порции и цену.',hrs:'07:00–22:00',id:1403071817},
+    {kr:'일등가마솥돼지국밥 남포점',ru:'Нампо, у BIFF · 620 отзывов ★4.47 · круглосуточно',what:'Кукпаб 8 000, если завтракать уже в Нампо (тогда такси 11 мин от отеля, а Амнам и Ёндо — после).',hrs:'24 ч',id:718740707}
+  ];
+  function renderOpts(list,el){el.innerHTML=list.map(function(o){return '<div class="opt"><div class="kr">'+esc(o.kr)+'</div><div class="ru">'+esc(o.ru)+'</div><p class="what">'+esc(o.what)+'</p><div class="meta"><span>'+esc(o.hrs)+'</span></div><a class="map" href="'+nl(o.id)+'" target="_blank" rel="noopener">Naver ↗</a></div>'}).join('')}
+  renderOpts(SANDO,document.getElementById('sando'));renderOpts(DINNER,document.getElementById('dinner'));renderOpts(BFAST,document.getElementById('bfast'));
+
+  // ---- map ----
+  var map=L.map('map',{zoomSnap:0.5});map.attributionControl.setPrefix(false);
+  var NV='1791456229';
+  function naverLayer(v){return L.tileLayer('https://map.pstatic.net/nrb/styles/basic/'+v+'/{z}/{x}/{y}@2x.png?mt=bg.ol.ts.lko',{tileSize:512,zoomOffset:-1,minZoom:7,maxZoom:20,maxNativeZoom:19,attribution:'карта © NAVER'})}
+  var base=naverLayer(NV).addTo(map),errs=0,fb=false;
+  base.on('tileerror',function(){errs++;if(errs>8&&!fb){fb=true;map.removeLayer(base);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map)}});
+  try{fetch('https://map.pstatic.net/nrb/styles/basic.json?fmt=png&mt=bg.ol.ts.lko').then(function(r){return r.text()}).then(function(t){var m=t.match(/\/styles\/basic\/(\d{6,})\//);if(m&&m[1]!==NV&&!fb){map.removeLayer(base);base=naverLayer(m[1]).addTo(map)}}).catch(function(){})}catch(e){}
+  function icon(label,cls){return L.divIcon({className:'',html:'<div class="nmk'+(cls?' '+cls:'')+'">'+label+'</div>',iconSize:[26,26],iconAnchor:[13,13],popupAnchor:[0,-12]})}
+  var pathA=[];
+  A.forEach(function(s,i){var ll=[s.ll[1],s.ll[0]];pathA.push(ll);
+    var m=L.marker(ll,{icon:icon(s.kind==='hotel'?'⌂':(i+1),s.kind||''),zIndexOffset:s.kind==='hotel'?1000:0}).addTo(map);
+    m.bindTooltip(s.t+' '+s.kr,{direction:'top',offset:[0,-12],className:'pt'});
+    m.bindPopup('<b>'+esc(s.kr)+'</b><br>'+esc(s.ru)+'<br>'+s.t+(s.e?'–'+s.e:'')+'<br><a href="'+nl(s.id)+'" target="_blank" rel="noopener">Открыть в Naver Map ↗</a>',{maxWidth:280})});
+  L.polyline(pathA,{color:'#0E6F7C',weight:3,opacity:.75,dashArray:'6 6'}).addTo(map);
+  [B[2],B[3]].forEach(function(s){var m=L.marker([s.ll[1],s.ll[0]],{icon:icon('B','alt')}).addTo(map);m.bindTooltip('вариант B: '+s.kr,{direction:'top',offset:[0,-12],className:'pt'});m.bindPopup('<b>'+esc(s.kr)+'</b><br>'+esc(s.ru)+'<br>только в варианте B<br><a href="'+nl(s.id)+'" target="_blank" rel="noopener">Naver Map ↗</a>')});
+  var ALL=L.latLngBounds(pathA).extend([35.2839567,129.0680989]);
+  var WEST=L.latLngBounds([[35.05,128.99],[35.11,129.07]]),EAST=L.latLngBounds([[35.12,129.07],[35.17,129.20]]);
+  var inited=false;function initMap(){if(inited)return;inited=true;map.invalidateSize();map.fitBounds(L.latLngBounds(pathA),{padding:[12,12]})}
+  document.getElementById('zall').addEventListener('click',function(){map.fitBounds(ALL,{padding:[12,12]})});
+  document.getElementById('zwest').addEventListener('click',function(){map.fitBounds(WEST,{padding:[8,8]})});
+  document.getElementById('zeast').addEventListener('click',function(){map.fitBounds(EAST,{padding:[8,8]})});
+  window.addEventListener('resize',function(){if(inited)map.invalidateSize()});
+
+  // ---- tabs ----
+  var TABS=[['plan','План'],['map','Карта'],['alt','Варианты'],['food','Еда']];
+  var tabsEl=document.getElementById('tabs');
+  function show(key){TABS.forEach(function(t){var on=t[0]===key;document.getElementById('tab-'+t[0]).classList.toggle('on',on);var b=document.getElementById('btn-'+t[0]);if(b)b.setAttribute('aria-selected',on?'true':'false');if(on&&t[0]==='map')initMap()});
+    try{localStorage.setItem('busan-15-tab',key)}catch(e){}if(location.hash!=='#'+key){try{history.replaceState(null,'','#'+key)}catch(e){}}}
+  tabsEl.innerHTML=TABS.map(function(t){return '<button type="button" role="tab" id="btn-'+t[0]+'" aria-selected="false">'+t[1]+'</button>'}).join('');
+  tabsEl.addEventListener('click',function(e){var b=e.target.closest('button');if(b)show(b.id.slice(4))});
+  var start='plan',hash=location.hash.replace('#','');
+  if(TABS.some(function(t){return t[0]===hash}))start=hash;else{try{var sv=localStorage.getItem('busan-15-tab');if(sv&&TABS.some(function(t){return t[0]===sv}))start=sv}catch(e){}}
+  show(start);
+  window.addEventListener('hashchange',function(){var h=location.hash.replace('#','');if(TABS.some(function(t){return t[0]===h}))show(h)});
+})();
+</script>
+</body>
+</html>
