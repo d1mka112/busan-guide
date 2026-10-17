@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<title>Сеул: день природы</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a vertical timeline for a phone in hand; each stop is a row, each leg between stops is a thin connector with the transport choice. */
+:root{
+  --bg:#F2F5F7; --surface:#FFFFFF; --fg:#16222C; --muted:#5E6E7A; --line:#D7DFE5; --chip:#E4ECF0;
+  --accent:#0E6F7C; --accent-ink:#FFFFFF; --ok:#1E7F4F; --warn:#B7791F; --bad:#B23A3A; --hotel:#E0352B; --alt:#7A8792;
+  --display:"Golos Text","IBM Plex Sans","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0E161C; --surface:#16222B; --fg:#E7EEF2; --muted:#9AACB8; --line:#27353F; --chip:#1F2E38;
+  --accent:#58C3CF; --accent-ink:#0B1418; --ok:#5FCF8E; --warn:#E0B35A; --bad:#F08383; --alt:#8A98A4; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0E161C; --surface:#16222B; --fg:#E7EEF2; --muted:#9AACB8; --line:#27353F; --chip:#1F2E38;
+  --accent:#58C3CF; --accent-ink:#0B1418; --ok:#5FCF8E; --warn:#E0B35A; --bad:#F08383; --alt:#8A98A4; color-scheme:dark }
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;padding-inline:16px;padding-block:0 48px}
+img{max-width:100%} [hidden]{display:none!important}
+.wrap{max-width:760px;margin:0 auto}
+header.top{padding-block:22px 10px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,6vw,34px);letter-spacing:-.01em;line-height:1.1;margin:0 0 6px;text-wrap:balance}
+.sub{color:var(--muted);font-size:13.5px;margin:0}
+.sub a,.plan a,.note a{color:var(--accent);text-decoration:none;font-weight:600}
+.sub a:hover,.plan a:hover{text-decoration:underline}
+.now{margin-top:10px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.now b{color:var(--fg);font-weight:600}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);margin-inline:-16px;padding-inline:16px;padding-block:8px;border-bottom:1px solid var(--line)}
+nav.tabs .row{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+nav.tabs .row::-webkit-scrollbar{display:none}
+nav.tabs button{flex:0 0 auto;appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 13.5px var(--display);padding:8px 13px;border-radius:999px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+nav.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.tab{display:none;padding-top:14px} section.tab.on{display:block}
+.lead{color:var(--muted);font-size:14px;margin:0 0 14px;max-width:62ch} .lead b{color:var(--fg);font-weight:600}
+h2{font-family:var(--display);font-weight:700;font-size:19px;margin:22px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+h2:first-child{margin-top:4px}
+.totals{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 14px}
+.totals div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.totals b{display:block;color:var(--fg);font:700 16px var(--display)}
+.tl{list-style:none;margin:0;padding:0}
+.stop{display:grid;grid-template-columns:44px minmax(0,1fr);gap:0 12px;padding:12px 0;border-top:1px solid var(--line)}
+.stop:first-child{border-top:0}
+.stop.now{background:linear-gradient(90deg,transparent,var(--chip));border-radius:10px;margin-inline:-8px;padding-inline:8px}
+.num{width:34px;height:34px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:800 15px var(--display);display:flex;align-items:center;justify-content:center;margin-top:2px}
+.num.hotel{background:var(--hotel);color:#fff}
+.num.food{background:#C47A12;color:#fff}
+.time{font:700 13.5px var(--display);color:var(--fg);font-variant-numeric:tabular-nums}
+.time span{color:var(--muted);font-weight:500}
+.kr{font-family:var(--display);font-weight:700;font-size:16.5px;line-height:1.25;margin-top:2px;overflow-wrap:anywhere}
+.ru{color:var(--muted);font-size:13px}
+.what{margin:5px 0 0;font-size:14px;max-width:62ch}
+.meta{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12.5px;color:var(--muted);margin-top:5px;font-variant-numeric:tabular-nums}
+.st{display:inline-block;font:600 11.5px var(--display);padding:2px 7px;border-radius:999px;background:var(--chip);color:var(--fg)}
+.st.ok{color:var(--ok)} .st.warn{color:var(--warn)} .st.bad{color:var(--bad)}
+.map{display:inline-flex;align-items:center;gap:4px;background:var(--chip);color:var(--accent);text-decoration:none;font:600 12px var(--display);padding:5px 9px;border-radius:7px;white-space:nowrap;margin-top:6px}
+.leg{display:grid;grid-template-columns:44px minmax(0,1fr);gap:0 12px;padding:2px 0 8px}
+.leg .bar{justify-self:center;width:2px;background:var(--line);min-height:28px;border-radius:2px}
+.leg .how{font-size:13px;color:var(--muted);padding:2px 0}
+.leg .how b{color:var(--fg);font-weight:600}
+.leg .how .alt{display:block;font-size:12.5px}
+.opts{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.opt{padding:11px 14px;border-top:1px solid var(--line)} .opt:first-child{border-top:0}
+.opt .kr{font-size:15.5px}
+.plan h3{font-family:var(--display);font-size:17px;margin:18px 0 6px}
+.plan p,.plan li{max-width:65ch} .plan ul{padding-left:18px;margin:0 0 8px} .plan li{margin:4px 0}
+.mapbtns{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px}
+.mapbtns button{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 12.5px var(--display);padding:7px 11px;border-radius:999px;cursor:pointer}
+.mapbox{height:min(70vh,640px);border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#DCE8EE}
+.leaflet-container{font-family:var(--body);font-size:13px}
+.leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--fg)}
+.leaflet-popup-content{margin:10px 12px;line-height:1.35}
+.nmk{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);font:800 13px var(--display);display:flex;align-items:center;justify-content:center}
+.nmk.hotel{background:var(--hotel)} .nmk.alt{background:var(--alt)} .nmk.food{background:#C47A12} .nmk.green{background:#2E8B57;width:18px;height:18px;font-size:0}
+.leaflet-tooltip.pt{font:600 12px var(--display);padding:3px 7px;border-radius:6px;background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
+
+.warn{background:var(--chip);border-radius:10px;padding:10px 12px;font-size:13.5px;margin:0 0 12px;max-width:65ch}
+.warn b{color:var(--fg)}
+.src{font-size:12.5px;color:var(--muted);margin-top:4px}
+.src a{color:var(--accent);text-decoration:none;font-weight:600}
+.chip{display:inline-block;font:600 11.5px var(--display);padding:2px 7px;border-radius:999px;background:var(--accent);color:var(--accent-ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <h1>Сеул: день природы</h1>
+  <p class="sub">Воскресенье 18 октября · старт из отеля 마루호텔 у станции Пульгван · закат около 17:50 · время в пути и часы работы сняты с Naver Map 17 октября · <a href="index.html">Пусан →</a></p>
+  <div class="now" id="now"></div>
+</header>
+<nav class="tabs" aria-label="Разделы"><div class="row" id="tabs"></div></nav>
+
+<section class="tab" id="tab-plan">
+  <p class="lead"><b>Вариант A, в городе.</b> Гора Пукхансан пешком от отеля, обед в ханок-деревне у подножия с храмом Чинкванса, вечером поле серебристой травы 억새 на холме Ханыль: закат и световое шоу фестиваля. Без такси; к автобусам прибавляйте 10–15 минут ожидания, метро ходит каждые 4–7 минут.</p>
+  <div class="totals" id="totalsA"></div>
+  <ol class="tl" id="tlA"></ol>
+</section>
+
+<section class="tab" id="tab-out">
+  <p class="lead"><b>Вариант B, за городом.</b> Гора Мёнсонсан в Пхочхоне: подъём вдоль водопадов к полю серебристой травы, внизу озеро Санджон и фестиваль. 18.10 — его последний день.</p>
+  <div class="warn"><b>Что пишут корейцы 15.10:</b> трава почти в пике, но местами редкая, «раньше была гуще»; по дороге вверх яркие клёны, их хвалят больше травы. Парковка у подножия была забита к 9:50 даже в будний день, у подъёма очереди из туристических автобусов. <span class="src">Источник: <a href="https://m.blog.naver.com/hello_heeyaa/224443122948" target="_blank" rel="noopener">блог Naver, визит 15.10</a></span></div>
+  <div class="totals" id="totalsB"></div>
+  <ol class="tl" id="tlB"></ol>
+</section>
+
+<section class="tab" id="tab-more">
+  <p class="lead">Остальная природа, которую можно вставить в любой день. В скобках — сколько раз о месте писали в корейских блогах, это лучший признак популярности для парков и гор.</p>
+  <div class="opts" id="more"></div>
+</section>
+
+<section class="tab" id="tab-food">
+  <h2>Завтрак у отеля</h2><div class="opts" id="fBf"></div>
+  <h2>Обед у ханок-деревни</h2><div class="opts" id="fHanok"></div>
+  <h2>Ужин после Ханыль</h2><p class="lead">Мангвон — 40 минут от холма, но там лучшие места района; Санам — у станции World Cup Stadium, оттуда домой по 6-й ветке без пересадок.</p><div class="opts" id="fDinner"></div>
+  <h2>У озера Санджон (вариант B)</h2><div class="opts" id="fSanjeong"></div>
+</section>
+
+<section class="tab" id="tab-map">
+  <p class="lead">Цифры — вариант A, серые B — Мёнсонсан (далеко на северо-востоке), зелёные — остальная природа. Красная — отель.</p>
+  <div class="mapbtns"><button type="button" id="zA">Вариант A</button><button type="button" id="zcity">Весь Сеул</button><button type="button" id="zB">Мёнсонсан</button></div>
+  <div id="map" class="mapbox" aria-label="Карта"></div>
+</section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+(function(){
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function nl(id){return 'https://map.naver.com/p/entry/place/'+id}
+  function num(n){return n==null?'':Number(n).toLocaleString('ru-RU')}
+  var o={};new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',weekday:'short',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}).formatToParts(new Date()).forEach(function(p){o[p.type]=p.value});
+  document.getElementById('now').innerHTML='Сейчас в Сеуле <b>'+(o.hour==='24'?'00':o.hour)+':'+o.minute+'</b>';
+  var HOTEL={kr:'마루호텔',ru:'Отель · 통일로65길 10-2, станция 불광 (линии 3 и 6)',id:1928262294,ll:[126.92999,37.60925]};
+
+  var A=[
+    {t:'08:00',e:'08:40',kind:'food',kr:'삼오순대국 불광역점',ru:'Завтрак у станции Пульгван · 2 469 отзывов ★4.29',what:'Суп с кровяной колбасой и мясом 순대국 11 000 ₩, хвалят вкус и порции. Открыто с 07:30.',hrs:'вс 07:30–21:00',id:31728670,ll:[126.9300,37.6093],
+      leg:{taxi:'пешком к тропе 10–15 мин',alt:''}},
+    {t:'08:50',e:'11:20',kr:'족두리봉 · 북한산',ru:'Пукхансан, вершина Чоктурибон, 370 м',what:'Ближайшая к отелю вершина национального парка: гранитный купол с видом на весь северо-запад Сеула. Naver: около часа вверх от станции, 52 минуты вниз до отеля. Последний участок — по голой скале, можно остановиться на площадке под ней. Корейцы хвалят вид (31 голос), фото и «не людно». Длинный вариант для бодрых: по хребту дальше к 향로봉 и 비봉 и спуск в 구기동, плюс 2 часа, там завтракают в 장모님해장국.',hrs:'тропа открыта днём, спуститься до темноты',id:18663690,ll:[126.9429109,37.6179121],
+      leg:{taxi:'автобус 701 или 709 от отеля: 27 мин',alt:'от Чоктурибона сначала спуск к отелю 52 мин'}},
+    {t:'12:00',e:'14:30',kr:'은평한옥마을 · 진관사',ru:'Ханок-деревня у подножия Пукхансана и храм Чинкванса',what:'Обед (청류 — пхеньянский холодный 냉면 17 000, или бранч в 롱브레드), прогулка по деревне, 10 минут до храма Чинкванса и долины ручья. Кофе с видом на гору на крыше 1인1잔. Деревню хвалят за природу (133 голоса) и ухоженность, о храме 2 869 записей в блогах.',hrs:'деревня всегда · кафе с 10:00–11:00',id:37825869,ll:[126.9393075,37.6413181],
+      leg:{taxi:'автобусы 701 → 709 и 33 мин пешком в гору: 1 ч 17',alt:'или от 하늘공원 주차장 электрокар 맹꽁이 у парковки 난지천공원, если очередь небольшая'}},
+    {t:'16:00',e:'19:30',kr:'하늘공원 · 서울억새축제',ru:'Холм Ханыль: поле серебристой травы, фестиваль 17–23.10',what:'Поле 억새 на вершине бывшей свалки, вид на Ханган и Сеул. Закат около 17:50. Световое шоу 19:00–20:30, в 17 и 18 октября добавлен сеанс 20:30. Фестиваль 10:00–21:00, вход бесплатный. От станции около 40 минут пешком с подъёмом по лестнице; после 19:00 спуск в темноте, держите фонарик в телефоне. О парке 16 813 записей в блогах, хвалят тропы (608), вид (475), фото.',hrs:'фестиваль 10:00–21:00',id:13219083,ll:[126.8850630,37.5675623],
+      leg:{taxi:'спуск ~30 мин + автобус 7011 до Мангвона: 41 мин',alt:'или спуск к станции 월드컵경기장 (6-я линия) и ужин в Санаме'}},
+    {t:'20:15',e:'21:45',kind:'food',kr:'망원동 · ужин',ru:'Мангвон: 오시 (окономияки) или 우이락 (корейский паб)',what:'Варианты во вкладке «Еда». 우이락 — 20 962 отзыва, заказ до 21:00; 오시 до 22:00, бывает очередь.',hrs:'',id:1637769172,ll:[126.9055,37.5560],
+      leg:{taxi:'6-я линия 망원 → 불광: 29 мин',alt:''}},
+    {t:'22:20',e:'',kind:'hotel',kr:HOTEL.kr,ru:'Отель',what:'',hrs:'',id:HOTEL.id,ll:HOTEL.ll}
+  ];
+  var B=[
+    {t:'06:50',e:'07:40',kind:'hotel',kr:'마루호텔 → 동서울종합터미널',ru:'Метро 3 → 2 линия до станции 강변',what:'',hrs:'',id:HOTEL.id,ll:HOTEL.ll,leg:{taxi:'метро 46 мин · 1 750 ₩',alt:''}},
+    {t:'07:50',e:'09:30',kr:'동서울 → 운천',ru:'Междугородний автобус до Унчхона, 1 ч 30, 9 300 ₩',what:'В последний день фестиваля автобусы забиты: билет лучше купить заранее в приложении 버스타고 или T-money GO, иначе в кассе терминала. Запасной вариант Naver: экспресс от 서울고속버스터미널, 1 ч 29, 10 900 ₩.',hrs:'',id:11491825,ll:[127.0947,37.5348],leg:{taxi:'автобус 1386 от 운천: 15 мин · 3 200 ₩',alt:''}},
+    {t:'09:45',e:'13:00',kr:'명성산 억새군락지',ru:'Подъём: парковка 상동 → водопад 비선 → водопад 등룡 → поле травы',what:'Самый пологий и популярный маршрут, вдоль ручья. До поля около 1 ч 30, до павильона 팔각정 и обратно — 2 ч 30. Маршрут через 자인사 закрыт. О горе 1 188 записей в блогах, хвалят вид.',hrs:'спуститься до темноты',id:11491374,ll:[127.3100,38.0750],leg:{taxi:'спуск к озеру',alt:''}},
+    {t:'13:00',e:'15:30',kind:'food',kr:'산정호수 · 억새꽃축제',ru:'Озеро Санджон: обед, тропа вокруг озера, фестиваль',what:'Обед: 초가옥 (이동갈비 53 000 за порцию, с 12:00), булочная 산정호수 100년 단팥빵. Вокруг озера тропа по воде; о самом озере 8 538 записей в блогах.',hrs:'озеро всегда',id:11491825,ll:[127.3150,38.0700],leg:{taxi:'автобус 1386 → 직행 обратно в Сеул: 2 ч 45 · 4 900 ₩',alt:'вечерние автобусы в последний день фестиваля полные, не тяните с выездом'}},
+    {t:'18:30',e:'',kind:'hotel',kr:HOTEL.kr,ru:'Отель, вечером можно в 찜질방',what:'',hrs:'',id:HOTEL.id,ll:HOTEL.ll}
+  ];
+  function renderTL(list,el){var h='';list.forEach(function(s,i){
+      h+='<li class="stop"><div class="num'+(s.kind?' '+s.kind:'')+'">'+(s.kind==='hotel'?'⌂':(i+1))+'</div><div>';
+      h+='<div class="time">'+s.t+(s.e?' <span>– '+s.e+'</span>':'')+'</div><div class="kr">'+esc(s.kr)+'</div><div class="ru">'+esc(s.ru)+'</div>';
+      if(s.what)h+='<p class="what">'+esc(s.what)+'</p>';if(s.hrs)h+='<div class="meta"><span>'+esc(s.hrs)+'</span></div>';
+      h+='<a class="map" href="'+nl(s.id)+'" target="_blank" rel="noopener">Naver ↗</a></div></li>';
+      if(s.leg)h+='<li class="leg"><div class="bar"></div><div class="how"><b>'+esc(s.leg.taxi)+'</b>'+(s.leg.alt?'<span class="alt">'+esc(s.leg.alt)+'</span>':'')+'</div></li>'});el.innerHTML=h}
+  renderTL(A,document.getElementById('tlA'));renderTL(B,document.getElementById('tlB'));
+  document.getElementById('totalsA').innerHTML='<div>В дороге<b>≈ 3 ч</b>метро и автобусы, ≈ 6 000 ₩</div><div>Пешком в горах<b>≈ 2 ч 30</b>+ 1 ч на Ханыль</div><div>Домой<b>≈ 22:20</b></div>';
+  document.getElementById('totalsB').innerHTML='<div>В дороге<b>≈ 5 ч 30</b>≈ 20 000 ₩ на человека</div><div>Поход<b>≈ 3 ч</b>до поля и обратно</div><div>Домой<b>≈ 18:30</b></div>';
+
+  var MORE=[
+    {kr:'인왕산',ru:'Инвансан · скалы над дворцом Кёнбоккун, вид на центр и стену города (9 431)',what:'Подъём 1–1,5 ч, хвалят вид, фото и «необычный пейзаж». 3-я линия до 독립문 или 경복궁, без пересадок от отеля.',id:11491503,ll:[126.9578437,37.5849]},
+    {kr:'안산자락길',ru:'Ансан · дощатая тропа вокруг холма в Содэмуне (2 993)',what:'Ровная деревянная тропа 7 км по склону, без подъёмов, хвалят ухоженность. 3-я линия до 독립문.',id:36804699,ll:[126.9465278,37.574378]},
+    {kr:'서울숲',ru:'Сеульский лес · большой парк у Сонсу (35 056)',what:'Самый обсуждаемый парк города, рядом попапы и кафе Сонсу. Хорош для пикника.',id:11636039,ll:[127.0385663,37.5419644]},
+    {kr:'응봉산',ru:'Ынбонсан · холм с закатом над Ханганом и мостами (4 209)',what:'15 минут подъёма, один из лучших видов на закат в городе. Рядом с Сонсу.',id:11491502,ll:[127.029725,37.5478268]},
+    {kr:'노을공원',ru:'Ноыль · «парк заката» рядом с Ханыль (2 438)',what:'Соседний холм, тише, чем Ханыль в фестиваль. Закрывается в 20:00.',id:13220749,ll:[126.8748643,37.5746111]},
+    {kr:'봉산 편백나무 치유의 숲',ru:'Кипарисовый лес на горе Понсан · 20 минут от отеля (235)',what:'Тихий лес-«лечебница» с лежаками, «спокойно отдохнуть».',id:1840761224,ll:[126.9018243,37.5950392]},
+    {kr:'북한산둘레길 8구간 구름정원길',ru:'Кольцевая тропа Пукхансана, участок «облачный сад» · у отеля (516)',what:'Пологая тропа вдоль склона с мостками, без вершины.',id:20071995,ll:[126.9361918,37.6261196]},
+    {kr:'북한산 백운대',ru:'Пэгундэ · высшая точка Пукхансана, 836 м (986)',what:'Настоящий поход 4–5 ч, финал по тросам. От 북한산성 탐방지원센터, 25 минут автобусом от отеля.',id:30893618,ll:[126.9849723,37.6596751]},
+    {kr:'낙산공원',ru:'Наксан · старая городская стена с видами, вечер (7 017)',what:'Прогулка вдоль стены, рядом деревня Ихва. Хорошо на закате.',id:13299765,ll:[127.0074,37.5805]},
+    {kr:'수원화성 서북각루',ru:'Сувон, крепость Хвасон · поле серебристой травы у башни (8 038 у крепости)',what:'В свежих постах трава у северо-западной башни в цвету; удобно совместить со Starfield Library в день Сувона.',id:13491459,ll:[127.0119,37.2873]}
+  ];
+  function food(list,el){el.innerHTML=list.map(function(o){return '<div class="opt"><div class="kr">'+esc(o.kr)+'</div><div class="ru">'+esc(o.ru)+'</div><p class="what">'+esc(o.what)+'</p>'+(o.hrs?'<div class="meta"><span>'+esc(o.hrs)+'</span></div>':'')+'<a class="map" href="'+nl(o.id)+'" target="_blank" rel="noopener">Naver ↗</a></div>'}).join('')}
+  food(MORE,document.getElementById('more'));
+  food([
+    {kr:'삼오순대국 불광역점',ru:'순대국 · 2 469 отзывов ★4.29',what:'Суп с колбасой 순대 и мясом 11 000. Хвалят вкус, порции, вежливость.',hrs:'вс 07:30–21:00',id:31728670},
+    {kr:'스타벅스 불광역점',ru:'Кофе · 7 845 отзывов',what:'Если хочется просто кофе и выпечки перед горой.',hrs:'вс 07:00–22:00',id:1997786762}],document.getElementById('fBf'));
+  food([
+    {kr:'청류 은평한옥마을본점',ru:'Пхеньянский 냉면 · 5 385 отзывов',what:'평양냉면 17 000, гречневая лапша с перилловым маслом 17 000, сет с говядиной 19 000 (20 в день). Хвалят вкус, свежесть, интерьер.',hrs:'вс 11:00–20:30',id:1922492109},
+    {kr:'롱브레드 은평한옥마을점',ru:'Бранч с видом · 3 571 отзыв',what:'Панини 13 000, бенедикт 17 900. Хвалят вкус и вид на гору.',hrs:'вс 10:00–19:00',id:1660680786},
+    {kr:'1인1잔',ru:'Кафе на крыше с видом на Пукхансан · 4 492 отзыва ★4.34',what:'Кофе 6 000, полынный шоколадный торт 8 000. Главное — вид.',hrs:'вс 10:00–20:30',id:1101064446},
+    {kr:'스페이스헬레나',ru:'Кафе в ханоке · 2 267 отзывов ★4.67',what:'Пироги с говядиной 13 000, ханок-сет к чаю 65 000.',hrs:'вс 10:00–21:00',id:1432708920}],document.getElementById('fHanok'));
+  food([
+    {kr:'우이락 망원본점',ru:'Мангвон · корейский паб · 20 962 отзыва',what:'Сеты 26 500–41 800 на компанию; одно из самых отзываемых мест района. Хвалят вкус и особое меню.',hrs:'вс 11:00–22:00, заказ до 21:00',id:1040939211},
+    {kr:'오시 망원본점',ru:'Мангвон · окономияки · 11 244 отзыва ★4.81',what:'Окономияки 19 000, «ожидание того стоит».',hrs:'вс 11:30–22:00',id:1637769172},
+    {kr:'냅다청양집 상암직영점',ru:'Санам · свинина на гриле · 6 050 отзывов ★4.78',what:'Тонкая замороженная свинина 냉삼 11 900, хвалят цену. Рядом со станцией 6-й линии.',hrs:'вс 12:00–23:00',id:1486461844},
+    {kr:'전설의우대갈비 상암직영점',ru:'Санам · говяжьи рёбра · 4 821 отзыв ★4.89',what:'Большое ребро 42 000, перерыв 15:00–16:30.',hrs:'вс 11:10–21:50',id:1401522432}],document.getElementById('fDinner'));
+  food([
+    {kr:'초가옥',ru:'Говяжьи рёбра 이동갈비 у озера · 2 660 отзывов ★4.86',what:'Рёбра с горой чеснока 53 000. Хвалят качество мяса и закуски.',hrs:'вс 12:00–22:00, перерыв 15:30–17:00',id:1075928397},
+    {kr:'산정호수 100년 단팥빵',ru:'Булочная · 3 306 отзывов',what:'Булочки с бобовой пастой 3 200, кукурузный хлеб.',hrs:'вс 08:00–20:00',id:38233883},
+    {kr:'사르르목장',ru:'Кафе-ферма · 4 336 отзывов',what:'Мороженое из фермерского молока 5 200, каймак 12 000.',hrs:'вс 11:00–17:00',id:1337117839}],document.getElementById('fSanjeong'));
+
+  var map=L.map('map',{zoomSnap:0.5});map.attributionControl.setPrefix(false);
+  var NV='1791456229';
+  function naverLayer(v){return L.tileLayer('https://map.pstatic.net/nrb/styles/basic/'+v+'/{z}/{x}/{y}@2x.png?mt=bg.ol.ts.lko',{tileSize:512,zoomOffset:-1,minZoom:7,maxZoom:20,maxNativeZoom:19,attribution:'карта © NAVER'})}
+  var base=naverLayer(NV).addTo(map),errs=0,fb=false;
+  base.on('tileerror',function(){errs++;if(errs>8&&!fb){fb=true;map.removeLayer(base);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map)}});
+  try{fetch('https://map.pstatic.net/nrb/styles/basic.json?fmt=png&mt=bg.ol.ts.lko').then(function(r){return r.text()}).then(function(t){var m=t.match(/\/styles\/basic\/(\d{6,})\//);if(m&&m[1]!==NV&&!fb){map.removeLayer(base);base=naverLayer(m[1]).addTo(map)}}).catch(function(){})}catch(e){}
+  function icon(l,c){return L.divIcon({className:'',html:'<div class="nmk'+(c?' '+c:'')+'">'+l+'</div>',iconSize:[26,26],iconAnchor:[13,13],popupAnchor:[0,-12]})}
+  function pop(s,extra){return '<b>'+esc(s.kr)+'</b><br>'+esc(s.ru)+(extra?'<br>'+extra:'')+'<br><a href="'+nl(s.id)+'" target="_blank" rel="noopener">Открыть в Naver Map ↗</a>'}
+  var pathA=[];
+  A.forEach(function(s,i){if(s.kind==='hotel'&&i>0)return;var ll=[s.ll[1],s.ll[0]];pathA.push(ll);var m=L.marker(ll,{icon:icon(s.kind==='hotel'?'⌂':(i+1),s.kind||''),zIndexOffset:s.kind==='hotel'?1000:0}).addTo(map);m.bindTooltip(s.t+' '+s.kr,{direction:'top',offset:[0,-12],className:'pt'});m.bindPopup(pop(s,s.t+(s.e?'–'+s.e:'')),{maxWidth:280})});
+  pathA.unshift([HOTEL.ll[1],HOTEL.ll[0]]);pathA.push([HOTEL.ll[1],HOTEL.ll[0]]);
+  var hm=L.marker([HOTEL.ll[1],HOTEL.ll[0]],{icon:icon('⌂','hotel'),zIndexOffset:1000}).addTo(map);hm.bindTooltip('отель',{direction:'top',offset:[0,-12],className:'pt'});hm.bindPopup(pop(HOTEL));
+  L.polyline(pathA,{color:'#0E6F7C',weight:3,opacity:.75,dashArray:'6 6'}).addTo(map);
+  B.filter(function(s){return !s.kind||s.kind==='food'}).forEach(function(s){var m=L.marker([s.ll[1],s.ll[0]],{icon:icon('B','alt')}).addTo(map);m.bindTooltip('вариант B: '+s.kr,{direction:'top',offset:[0,-12],className:'pt'});m.bindPopup(pop(s,'вариант B'))});
+  MORE.forEach(function(s){var m=L.marker([s.ll[1],s.ll[0]],{icon:icon('','green')}).addTo(map);m.bindTooltip(s.kr,{direction:'top',offset:[0,-10],className:'pt'});m.bindPopup(pop(s,esc(s.what)),{maxWidth:280})});
+  var BA=L.latLngBounds(pathA),BC=L.latLngBounds(MORE.map(function(s){return [s.ll[1],s.ll[0]]}).filter(function(p){return p[0]>37.4})).extend(BA),BB=L.latLngBounds([[38.06,127.29],[38.08,127.33]]);
+  var fitted=false,touched=false;map.on('dragstart',function(){touched=true});
+  function fitA(){var el=document.getElementById('map');if(!el.clientWidth||!el.clientHeight)return;map.invalidateSize();map.fitBounds(BA,{padding:[14,14]});fitted=true}
+  function initMap(){if(fitted)return;setTimeout(fitA,80);setTimeout(function(){if(!fitted)fitA()},600)}
+  if(window.ResizeObserver)new ResizeObserver(function(){if(!fitted&&!touched)fitA()}).observe(document.getElementById('map'));
+  document.getElementById('zA').addEventListener('click',function(){map.fitBounds(BA,{padding:[14,14]})});
+  document.getElementById('zcity').addEventListener('click',function(){map.fitBounds(BC,{padding:[14,14]})});
+  document.getElementById('zB').addEventListener('click',function(){map.fitBounds(BB,{padding:[14,14]})});
+  window.addEventListener('resize',function(){if(fitted)map.invalidateSize()});
+
+  var TABS=[['plan','A: в городе'],['out','B: Мёнсонсан'],['more','Ещё природа'],['food','Еда'],['map','Карта']];
+  var tabsEl=document.getElementById('tabs');
+  function show(key){TABS.forEach(function(t){var on=t[0]===key;document.getElementById('tab-'+t[0]).classList.toggle('on',on);var b=document.getElementById('btn-'+t[0]);if(b)b.setAttribute('aria-selected',on?'true':'false');if(on&&t[0]==='map')initMap()});
+    try{localStorage.setItem('seoul-tab',key)}catch(e){}if(location.hash!=='#'+key){try{history.replaceState(null,'','#'+key)}catch(e){}}}
+  tabsEl.innerHTML=TABS.map(function(t){return '<button type="button" role="tab" id="btn-'+t[0]+'" aria-selected="false">'+t[1]+'</button>'}).join('');
+  tabsEl.addEventListener('click',function(e){var b=e.target.closest('button');if(b)show(b.id.slice(4))});
+  var start='plan',h=location.hash.replace('#','');if(TABS.some(function(t){return t[0]===h}))start=h;else{try{var sv=localStorage.getItem('seoul-tab');if(sv&&TABS.some(function(t){return t[0]===sv}))start=sv}catch(e){}}
+  show(start);window.addEventListener('hashchange',function(){var x=location.hash.replace('#','');if(TABS.some(function(t){return t[0]===x}))show(x)});
+})();
+</script>
+</body>
+</html>
