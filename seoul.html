@@ -80,7 +80,8 @@ h2:first-child{margin-top:4px}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--surface);color:var(--fg)}
 .leaflet-popup-content{margin:10px 12px;line-height:1.35}
 .nmk{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4);font:800 13px var(--display);display:flex;align-items:center;justify-content:center}
-.nmk.hotel{background:var(--hotel)} .nmk.alt{background:var(--alt)} .nmk.food{background:#C47A12} .nmk.green{background:#2E8B57;width:18px;height:18px;font-size:0}
+.nmk.hotel{background:var(--hotel)} .nmk.alt{background:var(--alt)} .nmk.food{background:#C47A12} .nmk.c{background:#6A4FBF}
+.nmk.green{background:#2E8B57;width:18px;height:18px;font-size:0}
 .leaflet-tooltip.pt{font:600 12px var(--display);padding:3px 7px;border-radius:6px;background:var(--surface);color:var(--fg);border:1px solid var(--line)}
 footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
 
@@ -106,6 +107,13 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
   <ol class="tl" id="tlA"></ol>
 </section>
 
+<section class="tab" id="tab-gn">
+  <p class="lead"><b>Вариант C: библиотека, гора, лес и Ханган.</b> Библиотека Starfield в COEX и храм Понынса через дорогу → гора Ачхасан с видом на реку → Сеульский лес → закат над Ханганом и мостами с холма Ынбонсан → ужин в Сонсу. Всё на метро и автобусах, к автобусам добавляйте 10–15 минут ожидания.</p>
+  <div class="warn"><b>Какая гора рядом с COEX.</b> Ачхасан (아차산, 295 м): 5 063 записи в блогах, хвалят вид (193 голоса), с хребта видно Ханган и весь восток Сеула, и он стоит по пути к Сеульскому лесу. Тэмосан (대모산, 293 м) к югу от COEX тише («не людно»), но о нём втрое меньше пишут и от него 1 ч 24 до леса. Чхонгесан (청계산) — большой поход, на этот день не влезает.</div>
+  <div class="totals" id="totalsC"></div>
+  <ol class="tl" id="tlC"></ol>
+</section>
+
 <section class="tab" id="tab-out">
   <p class="lead"><b>Вариант B, за городом.</b> Гора Мёнсонсан в Пхочхоне: подъём вдоль водопадов к полю серебристой травы, внизу озеро Санджон и фестиваль. 18.10 — его последний день.</p>
   <div class="warn"><b>Что пишут корейцы 15.10:</b> трава почти в пике, но местами редкая, «раньше была гуще»; по дороге вверх яркие клёны, их хвалят больше травы. Парковка у подножия была забита к 9:50 даже в будний день, у подъёма очереди из туристических автобусов. <span class="src">Источник: <a href="https://m.blog.naver.com/hello_heeyaa/224443122948" target="_blank" rel="noopener">блог Naver, визит 15.10</a></span></div>
@@ -126,8 +134,8 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
 </section>
 
 <section class="tab" id="tab-map">
-  <p class="lead">Цифры — вариант A, серые B — Мёнсонсан (далеко на северо-востоке), зелёные — остальная природа. Красная — отель.</p>
-  <div class="mapbtns"><button type="button" id="zA">Вариант A</button><button type="button" id="zcity">Весь Сеул</button><button type="button" id="zB">Мёнсонсан</button></div>
+  <p class="lead">Цифры — вариант A, фиолетовые C — COEX и Ханган, серые B — Мёнсонсан (далеко на северо-востоке), зелёные — остальная природа. Красная — отель.</p>
+  <div class="mapbtns"><button type="button" id="zA">Вариант A</button><button type="button" id="zC">Вариант C</button><button type="button" id="zcity">Весь Сеул</button><button type="button" id="zB">Мёнсонсан</button></div>
   <div id="map" class="mapbox" aria-label="Карта"></div>
 </section>
 </div>
@@ -155,6 +163,16 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
       leg:{taxi:'6-я линия 망원 → 불광: 29 мин',alt:''}},
     {t:'22:20',e:'',kind:'hotel',kr:HOTEL.kr,ru:'Отель',what:'',hrs:'',id:HOTEL.id,ll:HOTEL.ll}
   ];
+  var C=[
+    {t:'09:30',e:'10:30',kind:'hotel',kr:'마루호텔 → 코엑스',ru:'Метро 3 линия до 교대, 2 линия до 삼성',what:'',hrs:'',id:HOTEL.id,ll:HOTEL.ll,leg:{taxi:'метро 1 ч · 1 850 ₩',alt:''}},
+    {t:'10:30',e:'11:30',kr:'별마당 도서관 · 봉은사',ru:'Библиотека Starfield в COEX и храм Понынса через дорогу',what:'Библиотека открывается в 10:30, к открытию людей меньше всего; о ней 8 868 записей в блогах. Храм Понынса в 10 минутах пешком, 9 453 записи, древний храм среди небоскрёбов.',hrs:'библиотека 10:30–22:00 · храм всегда',id:214665616,ll:[127.0601768,37.5100579],leg:{taxi:'пешком',alt:''}},
+    {t:'11:30',e:'12:30',kind:'food',kr:'솥내음 스타필드 코엑스몰점',ru:'Обед в COEX: рис в каменном котелке 솥밥 · 30 590 отзывов ★4.86',what:'Фирменный котелок с морепродуктами 25 000, 23 вида на выбор. Если очередь — 탄탄면공방 (лапша 탄탄면, сет 14 800) или 호호식당 (тонкацу 15 000). Все в подвале COEX.',hrs:'вс 10:30–22:00, перерыв 15:00–16:00',id:1066276781,ll:[127.0590,37.5112],leg:{taxi:'2 линия 삼성 → 구의 + автобус: 36 мин',alt:'автобус 2415: 49 мин'}},
+    {t:'13:10',e:'15:00',kr:'아차산',ru:'Гора Ачхасан, 295 м · вид на Ханган',what:'От станции 아차산 около 45 минут вверх до смотровой 해맞이광장 и беседки 고구려정, дальше по хребту с видом на реку и мосты. Тропа ухоженная, с лестницами. Вниз около 30 минут.',hrs:'спуститься до темноты',id:11491459,ll:[127.1015507,37.5595919],leg:{taxi:'спуск + автобус 광진03 и пересадка: 50 мин от подножия',alt:'всего по Naver 1 ч 19 с вершины'}},
+    {t:'16:00',e:'17:05',kr:'서울숲',ru:'Сеульский лес · самый обсуждаемый парк города (35 056)',what:'Аллеи, оленья поляна, мост над рекой. Хвалят вид, фото, прогулки. На краю парка Underground Avenue из контейнеров и кафе Сонсу.',hrs:'05:30–21:30',id:11636039,ll:[127.0385663,37.5419644],leg:{taxi:'пешком 34 мин',alt:'или 응봉역 одна остановка'}},
+    {t:'17:40',e:'18:15',kr:'응봉산',ru:'Холм Ынбонсан · закат над Ханганом и мостами',what:'15 минут подъёма от подножия, закат около 17:50, потом огни мостов и дорог вдоль реки. 4 209 записей в блогах, хвалят вид и «не людно».',hrs:'всегда',id:11491502,ll:[127.029725,37.5478268],leg:{taxi:'автобус 2016 до Сонсу: 28 мин',alt:''}},
+    {t:'18:45',e:'20:15',kind:'food',kr:'성수 · ужин',ru:'Сонсу: 타코튜즈데이 · 미쁘동 · 이태리국시',what:'타코튜즈데이 — 25 784 отзыва ★4.88, мексиканская кухня. 미쁘동 — рис с лососем 18 000, ★4.88. 이태리국시 — корейско-итальянская кухня, ★4.85. Кофе до или после: Blue Bottle Сонсу, 카페 마트리.',hrs:'вс до 21:00–22:00',id:1836736663,ll:[127.0450,37.5445],leg:{taxi:'2 линия → 3 линия: 42 мин',alt:''}},
+    {t:'21:00',e:'',kind:'hotel',kr:HOTEL.kr,ru:'Отель',what:'',hrs:'',id:HOTEL.id,ll:HOTEL.ll}
+  ];
   var B=[
     {t:'06:50',e:'07:40',kind:'hotel',kr:'마루호텔 → 동서울종합터미널',ru:'Метро 3 → 2 линия до станции 강변',what:'',hrs:'',id:HOTEL.id,ll:HOTEL.ll,leg:{taxi:'метро 46 мин · 1 750 ₩',alt:''}},
     {t:'07:50',e:'09:30',kr:'동서울 → 운천',ru:'Междугородний автобус до Унчхона, 1 ч 30, 9 300 ₩',what:'В последний день фестиваля автобусы забиты: билет лучше купить заранее в приложении 버스타고 или T-money GO, иначе в кассе терминала. Запасной вариант Naver: экспресс от 서울고속버스터미널, 1 ч 29, 10 900 ₩.',hrs:'',id:11491825,ll:[127.0947,37.5348],leg:{taxi:'автобус 1386 от 운천: 15 мин · 3 200 ₩',alt:''}},
@@ -168,7 +186,7 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
       if(s.what)h+='<p class="what">'+esc(s.what)+'</p>';if(s.hrs)h+='<div class="meta"><span>'+esc(s.hrs)+'</span></div>';
       h+='<a class="map" href="'+nl(s.id)+'" target="_blank" rel="noopener">Naver ↗</a></div></li>';
       if(s.leg)h+='<li class="leg"><div class="bar"></div><div class="how"><b>'+esc(s.leg.taxi)+'</b>'+(s.leg.alt?'<span class="alt">'+esc(s.leg.alt)+'</span>':'')+'</div></li>'});el.innerHTML=h}
-  renderTL(A,document.getElementById('tlA'));renderTL(B,document.getElementById('tlB'));
+  renderTL(A,document.getElementById('tlA'));renderTL(C,document.getElementById('tlC'));document.getElementById('totalsC').innerHTML='<div>В дороге<b>≈ 3 ч 30</b>≈ 8 000 ₩ на человека</div><div>Пешком<b>≈ 3 ч</b>гора, лес, холм</div><div>Домой<b>≈ 21:00</b></div>';renderTL(B,document.getElementById('tlB'));
   document.getElementById('totalsA').innerHTML='<div>В дороге<b>≈ 3 ч</b>метро и автобусы, ≈ 6 000 ₩</div><div>Пешком в горах<b>≈ 2 ч 30</b>+ 1 ч на Ханыль</div><div>Домой<b>≈ 22:20</b></div>';
   document.getElementById('totalsB').innerHTML='<div>В дороге<b>≈ 5 ч 30</b>≈ 20 000 ₩ на человека</div><div>Поход<b>≈ 3 ч</b>до поля и обратно</div><div>Домой<b>≈ 18:30</b></div>';
 
@@ -218,18 +236,21 @@ footer{color:var(--muted);font-size:12.5px;margin-top:28px;max-width:65ch}
   var hm=L.marker([HOTEL.ll[1],HOTEL.ll[0]],{icon:icon('⌂','hotel'),zIndexOffset:1000}).addTo(map);hm.bindTooltip('отель',{direction:'top',offset:[0,-12],className:'pt'});hm.bindPopup(pop(HOTEL));
   L.polyline(pathA,{color:'#0E6F7C',weight:3,opacity:.75,dashArray:'6 6'}).addTo(map);
   B.filter(function(s){return !s.kind||s.kind==='food'}).forEach(function(s){var m=L.marker([s.ll[1],s.ll[0]],{icon:icon('B','alt')}).addTo(map);m.bindTooltip('вариант B: '+s.kr,{direction:'top',offset:[0,-12],className:'pt'});m.bindPopup(pop(s,'вариант B'))});
+  var pathC=[];C.forEach(function(s,i){if(s.kind==='hotel')return;var ll=[s.ll[1],s.ll[0]];pathC.push(ll);var m=L.marker(ll,{icon:icon('C'+i,'c')}).addTo(map);m.bindTooltip('C: '+s.t+' '+s.kr,{direction:'top',offset:[0,-12],className:'pt'});m.bindPopup(pop(s,s.t+(s.e?'–'+s.e:'')),{maxWidth:280})});
+  L.polyline(pathC,{color:'#6A4FBF',weight:3,opacity:.7,dashArray:'6 6'}).addTo(map);
   MORE.forEach(function(s){var m=L.marker([s.ll[1],s.ll[0]],{icon:icon('','green')}).addTo(map);m.bindTooltip(s.kr,{direction:'top',offset:[0,-10],className:'pt'});m.bindPopup(pop(s,esc(s.what)),{maxWidth:280})});
-  var BA=L.latLngBounds(pathA),BC=L.latLngBounds(MORE.map(function(s){return [s.ll[1],s.ll[0]]}).filter(function(p){return p[0]>37.4})).extend(BA),BB=L.latLngBounds([[38.06,127.29],[38.08,127.33]]);
+  var BA=L.latLngBounds(pathA),BC=L.latLngBounds(pathC).extend(MORE.map(function(s){return [s.ll[1],s.ll[0]]}).filter(function(p){return p[0]>37.4})).extend(BA),BB=L.latLngBounds([[38.06,127.29],[38.08,127.33]]);
   var fitted=false,touched=false;map.on('dragstart',function(){touched=true});
   function fitA(){var el=document.getElementById('map');if(!el.clientWidth||!el.clientHeight)return;map.invalidateSize();map.fitBounds(BA,{padding:[14,14]});fitted=true}
   function initMap(){if(fitted)return;setTimeout(fitA,80);setTimeout(function(){if(!fitted)fitA()},600)}
   if(window.ResizeObserver)new ResizeObserver(function(){if(!fitted&&!touched)fitA()}).observe(document.getElementById('map'));
   document.getElementById('zA').addEventListener('click',function(){map.fitBounds(BA,{padding:[14,14]})});
+  document.getElementById('zC').addEventListener('click',function(){map.fitBounds(L.latLngBounds(pathC),{padding:[14,14]})});
   document.getElementById('zcity').addEventListener('click',function(){map.fitBounds(BC,{padding:[14,14]})});
   document.getElementById('zB').addEventListener('click',function(){map.fitBounds(BB,{padding:[14,14]})});
   window.addEventListener('resize',function(){if(fitted)map.invalidateSize()});
 
-  var TABS=[['plan','A: в городе'],['out','B: Мёнсонсан'],['more','Ещё природа'],['food','Еда'],['map','Карта']];
+  var TABS=[['plan','A: в городе'],['gn','C: COEX и Ханган'],['out','B: Мёнсонсан'],['more','Ещё природа'],['food','Еда'],['map','Карта']];
   var tabsEl=document.getElementById('tabs');
   function show(key){TABS.forEach(function(t){var on=t[0]===key;document.getElementById('tab-'+t[0]).classList.toggle('on',on);var b=document.getElementById('btn-'+t[0]);if(b)b.setAttribute('aria-selected',on?'true':'false');if(on&&t[0]==='map')initMap()});
     try{localStorage.setItem('seoul-tab',key)}catch(e){}if(location.hash!=='#'+key){try{history.replaceState(null,'','#'+key)}catch(e){}}}
